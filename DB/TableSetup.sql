@@ -3,8 +3,7 @@ CREATE TABLE GRECORD
 (
 	GID   varchar(10) NOT NULL,				
 	GName varchar(10) NOT NULL,
-	CONSTRAINT GRECORD_PK PRIMARY KEY(GID)	
-	
+	CONSTRAINT GRECORD_PK PRIMARY KEY(GID)		
 );
 commit;
 
@@ -12,13 +11,12 @@ CREATE TABLE EES_RECORD
 (
 	RECID      int NOT NULL,	
 	TIME_STAMP varchar(20) NOT NULL,
-    RTYPE      varchar(5)  NOT NULL,
+        RTYPE      varchar(5)  NOT NULL,
     
 	CONSTRAINT EES_RECORD_PK PRIMARY KEY(RECID),                          
     
-    CONSTRAINT TYPE_DOM_CHK  CHECK (RTYPE in ('CR', 'AR')),
-    CONSTRAINT RECID_CHK     CHECK (RECID >=0)
-	
+    	CONSTRAINT TYPE_DOM_CHK  CHECK (RTYPE in ('CR', 'AR')),
+    	CONSTRAINT RECID_CHK     CHECK (RECID >=0)	
 );
 commit;
 
