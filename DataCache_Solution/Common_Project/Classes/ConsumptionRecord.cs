@@ -27,6 +27,13 @@ namespace Common_Project.Classes
             timeStamp = "";
         }
 
+        public ConsumptionRecord(string gID, int mWh, string timeStamp)
+        {
+            this.gID = gID;
+            this.mWh = mWh;
+            this.timeStamp= timeStamp;
+        }
+
         ~ConsumptionRecord()
         {
 

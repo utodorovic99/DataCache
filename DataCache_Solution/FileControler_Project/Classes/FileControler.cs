@@ -150,16 +150,12 @@ namespace FileControler_Project.Classes
                         //////////////////////////////////////////////////////////////////////////////////////////////////
                        
                         return this.InitDBConsumptionWrite(loaded.Item2);  // Write loaded content to distributed DB
-
-                        break;
                     }
                 default:
                     {
                         return new Tuple<EFileLoadStatus, ConsumptionUpdate>(EFileLoadStatus.InvalidFileExtension, new ConsumptionUpdate());
                     }
             }
-
-            return retVal;
         }
 
         private bool IsValidDate(string year, string month, string day, ELoadDataType type)
