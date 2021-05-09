@@ -8,11 +8,45 @@ using System.Threading.Tasks;
 
 namespace DistributedDB_Project.DAO.Impl
 {
+    internal enum ETableType : int
+    {
+        Consumption,
+        Audit,
+        EES,
+        Geography,
+    }
+
     internal class CommonImpl
     {
-        //Container class for all common methods
-        internal static  bool ContainsPK(string query)
+
+
+        internal static bool ContainsPK(string key, ETableType tableType)
         {
+            string query = "";
+            switch (tableType)
+            {
+                case ETableType.Consumption: 
+                    {
+                        query = "SELECT CID FROM CONSUMPTION";
+                        break; 
+                    }
+                case ETableType.Audit: 
+                    {
+                        query = "SELECT AID FROM CONSUMPTION_AUDIT";
+                        break; 
+                    }
+                case ETableType.EES: 
+                    {
+                        query = "SELECT RECID FROM EES";
+                        break; 
+                    }
+                case ETableType.Geography:
+                    {
+                        query = "SELECT GID FROM GEOGRAPHY_SUBSYSTEM";
+                        break;
+                    }
+            }
+
             using (IDbConnection connection = ConnectionUtil_Pooling.GetConnection())
             {
                 connection.Open();
@@ -20,10 +54,10 @@ namespace DistributedDB_Project.DAO.Impl
                 {
                     command.CommandText = query;
                     command.Prepare();
-                    return command.ExecuteScalar() != null;
-
+                    return command.ExecuteScalar().ToString() != "";
                 }
             }
         }
+ 
     }
 }

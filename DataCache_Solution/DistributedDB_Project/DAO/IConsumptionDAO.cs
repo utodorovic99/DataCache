@@ -15,19 +15,23 @@ using Common_Project.Classes;
 public interface IConsumptionDAO:ICRUDDao<ConsumptionRecord, string>  {
 
 
-	List<ConsumptionRecord> GetByCountry(string countryID);
+	List<ConsumptionRecord> FindByCountry(string countryID);
 
-	List<ConsumptionRecord> GetByCountryAndDate(string countryID, string targetTimestamp);
+	List<ConsumptionRecord> FindByCountryAndDate(string countryID, string targetTimestamp);
 
-	List<ConsumptionRecord> GetByCountryAndDatespan(string gID, string fromTimestamp, string tillTimestamp);
-
-
-	List<ConsumptionRecord> GetByGeographyAndAfterDate(string gID, string from);
+	List<ConsumptionRecord> FindByCountryAndDatespan(string gID, string fromTimestamp, string tillTimestamp);
 
 
-	List<ConsumptionRecord> GetByGeographyAndBeforeDate(string targetGID, string targetTimestamp);
+	List<ConsumptionRecord> FindByGeographyAndAfterDate(string gID, string from);
+
+
+	List<ConsumptionRecord> FindByGeographyAndBeforeDate(string targetGID, string targetTimestamp);
+
+
+	ConsumptionUpdate StoreConsumption(List<ConsumptionRecord> consumptionRecords);
+
 
 	ConsumptionUpdate StoreConsumption(ConsumptionRecord consumptionRecords);
-	ConsumptionUpdate StoreConsumption(List<ConsumptionRecord> consumptionRecords);
+
 
 }//end IConsumptionDAO

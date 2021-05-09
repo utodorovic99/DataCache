@@ -18,6 +18,7 @@ namespace DistributedDB_Project.DistributedCallHandler
             string answer;
             do
             {
+                Console.WriteLine("\n==============================================================\n");
                 Console.WriteLine();
                 Console.WriteLine("Pick an option:");
                 Console.WriteLine("1 - Consumption handling");
@@ -26,6 +27,7 @@ namespace DistributedDB_Project.DistributedCallHandler
                 Console.WriteLine("X - Exit");
 
                 answer = Console.ReadLine();
+                Console.WriteLine("\n==============================================================\n");
 
                 switch (answer)
                 {

@@ -10,8 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
-
-
+using Common_Project.Classes;
 
 public class GeographyService {
 
@@ -25,7 +24,7 @@ public class GeographyService {
 
 	}
 
-	public List<GRecord> HandleReadAll(){
+	public List<GeoRecord> HandleReadAll(){
 
 		return null;
 	}

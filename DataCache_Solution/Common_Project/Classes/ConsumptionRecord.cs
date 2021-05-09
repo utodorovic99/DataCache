@@ -83,7 +83,7 @@ namespace Common_Project.Classes
 
         public override string ToString()
         {
-            return string.Format("Consumption record GID: {0}, HOUR: {1}, LOAD: {2}", gID, timeStamp, mWh);
+            return string.Format("Consumption record GID: {0},\tHOUR: {1}, \tLOAD: {2}", gID, timeStamp, mWh);
         }
 
         public bool IsWholeEmpty()

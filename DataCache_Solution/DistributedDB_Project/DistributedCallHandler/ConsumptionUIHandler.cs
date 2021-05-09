@@ -16,6 +16,7 @@ namespace DistributedDB_Project.DistributedCallHandler
             String answer;
             do
             {
+                Console.WriteLine("\n==============================================================\n");
                 Console.WriteLine();
                 Console.WriteLine("Choose consumption-related operation:");
                 Console.WriteLine("1 - Show all");
@@ -31,6 +32,7 @@ namespace DistributedDB_Project.DistributedCallHandler
                 Console.WriteLine("X - Exit consumption menu");
 
                 answer = Console.ReadLine();
+                Console.WriteLine("\n==============================================================\n");
 
                 switch (answer)
                 {
@@ -66,15 +68,22 @@ namespace DistributedDB_Project.DistributedCallHandler
 
         private void ShowAll() 
         {
-            Console.WriteLine("\t\t<< ALL CONSUMPTION RECORDS >> ");
+            Console.WriteLine("\t\t<< ALL CONSUMPTION RECORDS >> "+Environment.NewLine);
+            int idx = 0;
+            foreach(var consumptionRecord in consumptionService.HandleFindConsumptionAll())
+            { 
+
+                Console.WriteLine("\t"+ ++idx +".\t" +consumptionRecord.ToString());
+            }
         }
 
+        //For testing purposes consider user input (granted by user agent)
         private void ShowByGeography() 
         {
             Console.Write("Enter GID for target entities: ");
             string targetGID=Console.ReadLine();
 
-            Console.WriteLine(Environment.NewLine+"\t\t<< ALL CONSUMPTION RECORDS FOR {0} >> ",targetGID+ Environment.NewLine);
+            Console.WriteLine(Environment.NewLine+"\t\t<< ALL CONSUMPTION RECORDS FOR {0} >>\r\n",targetGID);
             foreach (ConsumptionRecord currRecord in consumptionService.HandleGetByCountry(targetGID))
             {
                 Console.WriteLine(currRecord.ToString());
@@ -86,10 +95,10 @@ namespace DistributedDB_Project.DistributedCallHandler
         {
             Console.Write("Enter GID for target entities: ");
             string targetGID = Console.ReadLine();
-            Console.Write("Enter date for target entities (Format: Year-Month-Day-Hour): ");
+            Console.Write("Enter date for target entities (Format: Year-Month-Day): ");
             string targetTimestamp = Console.ReadLine();
 
-            Console.WriteLine(Environment.NewLine + "\t\t<< ALL CONSUMPTION RECORDS FOR {0} AND DATE {1} >> ", targetGID, targetTimestamp + Environment.NewLine);
+            Console.WriteLine(Environment.NewLine + "\t\t<< ALL CONSUMPTION RECORDS FOR {0} AND DATE {1} >>\r\n", targetGID, targetTimestamp);
             foreach (ConsumptionRecord currRecord in consumptionService.HandleGetByCountryAndDate(targetGID, targetTimestamp))
             {
                 Console.WriteLine(currRecord.ToString());
@@ -101,10 +110,10 @@ namespace DistributedDB_Project.DistributedCallHandler
         {
             Console.Write("Enter GID for target entities: ");
             string targetGID = Console.ReadLine();
-            Console.Write("Enter \"from\" date for target entities (Format: Year-Month-Day-Hour): ");
+            Console.Write("Enter \"from\" date for target entities (Format: Year-Month-Day): ");
             string targetTimestamp = Console.ReadLine();
 
-            Console.WriteLine(Environment.NewLine + "\t\t<< ALL CONSUMPTION RECORDS FOR {0} AFTER {1} >> ",targetGID, targetTimestamp + Environment.NewLine);
+            Console.WriteLine(Environment.NewLine + "\t\t<< ALL CONSUMPTION RECORDS FOR {0} AFTER {1} >>\r\n", targetGID, targetTimestamp);
             foreach (ConsumptionRecord currRecord in consumptionService.HandleGetByGeographyAndAfterDate(targetGID, targetTimestamp))
             {
                 Console.WriteLine(currRecord.ToString());
@@ -116,10 +125,10 @@ namespace DistributedDB_Project.DistributedCallHandler
         {
             Console.Write("Enter GID for target entities: ");
             string targetGID = Console.ReadLine();
-            Console.Write("Enter \"till\" date for target entities (Format: Year-Month-Day-Hour): ");
+            Console.Write("Enter \"till\" date for target entities (Format: Year-Month-Day): ");
             string targetTimestamp = Console.ReadLine();
 
-            Console.WriteLine(Environment.NewLine + "\t\t<< ALL CONSUMPTION RECORDS FOR {0} BEFORE {1} >> ", targetGID, targetTimestamp + Environment.NewLine);
+            Console.WriteLine(Environment.NewLine + "\t\t<< ALL CONSUMPTION RECORDS FOR {0} BEFORE {1} >>\r\n", targetGID, targetTimestamp);
             foreach (ConsumptionRecord currRecord in consumptionService.HandleGetByGeographyAndBeforeDate(targetGID, targetTimestamp))
             {
                 Console.WriteLine(currRecord.ToString());
@@ -131,13 +140,13 @@ namespace DistributedDB_Project.DistributedCallHandler
         {
             Console.Write("Enter GID for target entities: ");
             string targetGID = Console.ReadLine();
-            Console.Write("Enter \"from\" date for target entities (Format: Year-Month-Day-Hour): ");
+            Console.Write("Enter \"from\" date for target entities (Format: Year-Month-Day): ");
             string targetTimestampAfter = Console.ReadLine();
-            Console.Write("Enter \"till\" date for target entities (Format: Year-Month-Day-Hour): ");
+            Console.Write("Enter \"till\" date for target entities (Format: Year-Month-Day): ");
             string targetTimestampBefore = Console.ReadLine();
 
-            Console.WriteLine(Environment.NewLine + "\t\t<< ALL CONSUMPTION RECORDS FOR {0} BETWEEN {1} AND {2} >> ", targetGID, targetTimestampAfter, 
-                                                                                                                      targetTimestampBefore + Environment.NewLine);
+            Console.WriteLine(Environment.NewLine + "\t\t<< ALL CONSUMPTION RECORDS FOR {0} BETWEEN {1} AND {2} >>\r\n", targetGID, targetTimestampAfter, 
+                                                                                                                         targetTimestampBefore);
             foreach (var currRecord in consumptionService.HandleGetByCountryAndDatespan(targetGID, targetTimestampAfter, targetTimestampBefore)) 
             {
                 Console.WriteLine(currRecord.ToString());
@@ -154,15 +163,14 @@ namespace DistributedDB_Project.DistributedCallHandler
             Console.Write("Enter MWh: ");
             toAddConsumptionRecord.MWh= Int32.Parse(Console.ReadLine());
 
-            Console.Write("Enter Timestamp (Format: Year-Month-Day-Hour): ");
+            Console.Write("Enter Timestamp (Format: Year-Month-Day): ");
             toAddConsumptionRecord.TimeStamp=Console.ReadLine();
 
             try
             {
-                List<ConsumptionRecord> insertConsumptionList = new List<ConsumptionRecord>(1);
-                insertConsumptionList.Add(toAddConsumptionRecord);
-                consumptionService.HandleStoreConsumption( insertConsumptionList );
+                var retVal=consumptionService.HandleStoreConsumption(toAddConsumptionRecord);
                 Console.WriteLine(Environment.NewLine + "\t\t<< INSERT SUCCEED >> ");
+                Console.WriteLine(Environment.NewLine + retVal + Environment.NewLine);
             }
             catch(Exception e)
             {
@@ -185,7 +193,7 @@ namespace DistributedDB_Project.DistributedCallHandler
                 Console.Write("Enter MWh: ");
                 toAddConsumptionRecord.MWh = Int32.Parse(Console.ReadLine());
 
-                Console.Write("Enter Timestamp (Format: Year-Month-Day-Hour): ");
+                Console.Write("Enter Timestamp (Format: Year-Month-Day): ");
                 toAddConsumptionRecord.TimeStamp = Console.ReadLine();
                 insertConsumptionList.Add(toAddConsumptionRecord);
 

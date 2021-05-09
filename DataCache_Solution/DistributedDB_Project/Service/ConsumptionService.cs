@@ -27,36 +27,45 @@ public class ConsumptionService {
 	/// 
 	/// <param name="countryID"></param>
 	public List<ConsumptionRecord> HandleGetByCountry(string countryID) { 
-		return m_IConsumptionDAO.GetByCountry(countryID);
+		return m_IConsumptionDAO.FindByCountry(countryID);
 	}
 
 	public List<ConsumptionRecord> HandleGetByCountryAndDate(string countryID, string targetTimestamp){
-		return m_IConsumptionDAO.GetByCountryAndDate(countryID, targetTimestamp);
+		return m_IConsumptionDAO.FindByCountryAndDate(countryID, targetTimestamp);
 	}
 
 	/// 
 	/// <param name="from"></param>
 	/// <param name="till"></param>
 	public List<ConsumptionRecord> HandleGetByCountryAndDatespan(string gID, string fromTimestamp, string tillTimestamp){
-		return m_IConsumptionDAO.GetByCountryAndDatespan(gID, fromTimestamp, tillTimestamp);
+		return m_IConsumptionDAO.FindByCountryAndDatespan(gID, fromTimestamp, tillTimestamp);
 	}
 
 	public List<ConsumptionRecord> HandleGetByGeographyAndAfterDate(string gID, string from){
-		return m_IConsumptionDAO.GetByGeographyAndAfterDate(gID, from);
+		return m_IConsumptionDAO.FindByGeographyAndAfterDate(gID, from);
 	}
 
 	public List<ConsumptionRecord> HandleGetByGeographyAndBeforeDate(string targetGID, string targetTimestamp){
-		return m_IConsumptionDAO.GetByGeographyAndBeforeDate(targetGID, targetTimestamp);
+		return m_IConsumptionDAO.FindByGeographyAndBeforeDate(targetGID, targetTimestamp);
     }
 
 	/// 
 	/// <param name="consumptionRecords"></param>
-	public ConsumptionUpdate HandleStoreConsumption(List<ConsumptionRecord> consumptionRecords){
-		return m_IConsumptionDAO.StoreConsumption(consumptionRecords);
+	public ConsumptionUpdate HandleStoreConsumption(List<ConsumptionRecord> consumptionRecords)
+	{
+		m_IConsumptionDAO.StoreConsumption(consumptionRecords);
+		return null;
 	}
 
-	public ConsumptionUpdate HandleStoreConsumption(ConsumptionRecord consumptionRecords){
-		return m_IConsumptionDAO.StoreConsumption(consumptionRecords);
+	public ConsumptionUpdate HandleStoreConsumption(ConsumptionRecord consumptionRecords)
+	{
+		m_IConsumptionDAO.StoreConsumption(consumptionRecords);
+		return null;
+	}
+
+	public List<ConsumptionRecord> HandleFindConsumptionAll()
+	{
+		return (List<ConsumptionRecord>)m_IConsumptionDAO.FindAll();
 	}
 
 }//end ConsumptionService
