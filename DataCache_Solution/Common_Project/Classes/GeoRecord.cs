@@ -24,6 +24,12 @@ namespace Common_Project.Classes
 
         }
 
+        public GeoRecord(string gID, string gName)
+        {
+            this.gID = gID;
+            this.gName = gName;
+        }
+
         ~GeoRecord()
         {
 
@@ -53,5 +59,9 @@ namespace Common_Project.Classes
             }
         }
 
+        public override string ToString()
+        {
+            return string.Format("Geographic entity: GID: {0}\tName: {1}", gID, gName);
+        }
     }//end GeoRecord
 }

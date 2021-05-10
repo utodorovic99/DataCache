@@ -10,9 +10,10 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
+using Common_Project.Classes;
 
-
-
-public interface IGeographyDAO  {
-
+public interface IGeographyDAO: ICRUDDao<GeoRecord, string>
+{
+    void DeleteById(List<string> targs);
+    void SingleGeoUpdate(GeoRecord newGeo);
 }//end IGeographyDAO

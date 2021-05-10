@@ -15,7 +15,7 @@ using Common_Project.Classes;
 
 public class AuditService {
 
-	public IAuditDAO m_IAuditDAO;
+	private IAuditDAO m_IAuditDAO;
 
 	public AuditService(){
 

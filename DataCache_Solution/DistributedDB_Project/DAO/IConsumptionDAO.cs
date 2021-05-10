@@ -33,5 +33,7 @@ public interface IConsumptionDAO:ICRUDDao<ConsumptionRecord, string>  {
 
 	ConsumptionUpdate StoreConsumption(ConsumptionRecord consumptionRecords);
 
+	bool ExistsByContent(ConsumptionRecord record); //
+
 
 }//end IConsumptionDAO

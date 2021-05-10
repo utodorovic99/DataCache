@@ -14,35 +14,73 @@ using Common_Project.Classes;
 
 public class GeographyService {
 
-	public IGeographyDAO m_IGeographyDAO;
+	private IGeographyDAO m_IGeographyDAO;
 
 	public GeographyService(){
-
+		m_IGeographyDAO = new GeographyDaoImpl();
 	}
 
 	~GeographyService(){
 
 	}
 
-	public List<GeoRecord> HandleReadAll(){
+	public List<GeoRecord> HandleShowAll(){
 
-		return null;
+		return m_IGeographyDAO.FindAll() as List<GeoRecord>;
+	}
+
+	public GeoRecord HandleShowByGID(string key)
+	{
+		return m_IGeographyDAO.FindById(key);
+	}
+
+	public List<GeoRecord> HandleShowMultipleByGID(List<string> keys)
+	{
+		return m_IGeographyDAO.FindAllById(keys) as List<GeoRecord>;
 	}
 
 	/// 
 	/// <param name="id"></param>
 	/// <param name="name"></param>
-	public int HandleSignleGeoWrite(string id, string name){
+	public void HandleSignleGeoWrite(GeoRecord toAddGeo){
 
-		return 0;
+		m_IGeographyDAO.Save(toAddGeo);
+	}
+
+	public void HandleMultipleGeoWrite(List<GeoRecord> toAddGeo)
+	{
+		m_IGeographyDAO.SaveAll(toAddGeo);
 	}
 
 	/// 
 	/// <param name="oldID"></param>
 	/// <param name="newID"></param>
-	public bool HandleSingleGeoUpdate(string oldID, string newID){
+	public void HandleSingleGeoUpdate(GeoRecord newGeo){
 
-		return false;
+		 m_IGeographyDAO.SingleGeoUpdate(newGeo);
 	}
+
+
+
+	public void HandleDeleteSingleGeoByGID(string targetGID)
+    {
+		m_IGeographyDAO.DeleteById(targetGID);
+    }
+
+
+	public void HandleDeleteMultipleGeoContent(List<string> targs)
+	{
+		m_IGeographyDAO.DeleteById(targs);
+	}
+
+	public void HandleDeleteAll()
+    {
+		m_IGeographyDAO.DeleteAll();
+    }
+
+	public int HandleCount()
+    {
+		return m_IGeographyDAO.Count();
+    }
 
 }//end GeographyService

@@ -8,16 +8,16 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.IO;
 using Common_Project.Classes;
 using System.Data;
 using DistributedDB_Project.Connection;
 using Oracle.ManagedDataAccess.Client;
 using System.Linq;
 using DistributedDB_Project.DAO.Impl;
+using DistributedDB_Project.Exceptions;
 
-public class ConsumptionDAOImpl : IConsumptionDAO {
+public class ConsumptionDAOImpl : IConsumptionDAO
+{
 
     internal enum ERecordType : int
     {
@@ -69,7 +69,16 @@ public class ConsumptionDAOImpl : IConsumptionDAO {
                 using (IDataReader reader = command.ExecuteReader())
                 {
                     reader.Read();
-                    retVal = new ConsumptionRecord(reader.GetString(0), reader.GetInt32(1), reader.GetString(2));
+                    try
+                    {
+                        retVal = new ConsumptionRecord(reader.GetString(0), reader.GetInt32(1), reader.GetString(2));
+                    }
+                    catch(ArgumentNullException )
+                    {
+                        //Nothing to read
+                        throw new ConsumptionNotFoundException("Invalid search arguments", "", "");
+                    }
+
                 }
             }
         }
@@ -98,7 +107,7 @@ public class ConsumptionDAOImpl : IConsumptionDAO {
         return retVal;
     }
 
-    private void ExecuteDMLCommand(string query)
+    private void ExecuteNonQueryCommand(string query)
     {
         using (IDbConnection connection = ConnectionUtil_Pooling.GetConnection())
         {
@@ -113,14 +122,13 @@ public class ConsumptionDAOImpl : IConsumptionDAO {
                 }
                 catch (OracleException oe)
                 {
-                    Console.WriteLine(query);
                     throw oe; 
                 }
             }
         }
     }
 
-    private void ExecuteDMLCommand(string query, IDbConnection connection)
+    private void ExecuteNonQueryCommand(string query, IDbConnection connection)
     {
 
         using (IDbCommand command = connection.CreateCommand())
@@ -167,30 +175,19 @@ public class ConsumptionDAOImpl : IConsumptionDAO {
         // Note Geography records stay even after all EES records are removed (to support add through UI option)
     }
 
-    private string FormatComplexArgument(IEnumerable<string> argList)
-    {
-        string outStr = "(";
-        foreach(var arg in argList)
-        {
-            outStr += arg.ToString() + ",";
-        }
-        outStr.TrimEnd(',');
-        return outStr+")";
-    }
-
     public void DeleteAll()
     {
         // Read documentation for delete logic
         string  query = "DELETE consumption_audited ";
-        ExecuteDMLCommand(query);
+        ExecuteNonQueryCommand(query);
         query = "DELETE consumption_recorded ";
-        ExecuteDMLCommand(query);
+        ExecuteNonQueryCommand(query);
         query = "DELETE consumption_audit ";
-        ExecuteDMLCommand(query);
+        ExecuteNonQueryCommand(query);
         query = "DELETE consumption ";
-        ExecuteDMLCommand(query);
+        ExecuteNonQueryCommand(query);
         query = "DELETE ees ";
-        ExecuteDMLCommand(query);
+        ExecuteNonQueryCommand(query);
     }
 
     public void DeleteById(string targetRECID)
@@ -228,38 +225,41 @@ public class ConsumptionDAOImpl : IConsumptionDAO {
                     while (reader.Read()) toDeleteAIDs.Add(reader.GetInt32(0).ToString());
                 }
 
+                if (toDeleteAIDs.Count == 0) 
+                    throw new  ConsumptionNotFoundException("Target consumption not found", targetRECID.ToString(), "");
+
                 query =  "DELETE " +                                                  // Break consumption connections
                          "FROM consumption_recorded cr " +
                          "WHERE cr.RECID = " + targetRECID + " ";
-                ExecuteDMLCommand(query, connection);
+                ExecuteNonQueryCommand(query, connection);
 
                 query = "DELETE " +                                                  // Delete consumption records
                          "FROM consumption cc " +
-                         "WHERE cc.CID IN " + FormatComplexArgument(toDeleteCIDs) + " ";
-                ExecuteDMLCommand(query, connection);
+                         "WHERE cc.CID IN " + CommonImpl.FormatComplexArgument(toDeleteCIDs) + " ";
+                ExecuteNonQueryCommand(query, connection);
 
                 query = "DELETE" +                                                  // Break audit connections
                          "FROM consumption_audited ca" +
                          "WHERE ca.RECID = " + targetRECID + " ";
-                ExecuteDMLCommand(query, connection);
+                ExecuteNonQueryCommand(query, connection);
 
 
                 query += "DELETE " +                                                  // Delete audit records
                          "FROM consumption_audit ca " +
-                         "WHERE ca.AID IN " + FormatComplexArgument(toDeleteAIDs) + " ";
-                ExecuteDMLCommand(query, connection);
+                         "WHERE ca.AID IN " + CommonImpl.FormatComplexArgument(toDeleteAIDs) + " ";
+                ExecuteNonQueryCommand(query, connection);
 
                 query += "DELETE " +                                                  // Delete EES record
                          "FROM EES ee " +
                          "WHERE ee.RECID = " + targetRECID +" ";
-                ExecuteDMLCommand(query, connection);
+                ExecuteNonQueryCommand(query, connection);
             }
         }
     }
 
     public bool ExistsById(string id)
     {
-        // Later implement try-catch
+
         using (IDbConnection connection = ConnectionUtil_Pooling.GetConnection())
         {
             connection.Open();
@@ -274,7 +274,7 @@ public class ConsumptionDAOImpl : IConsumptionDAO {
 
                 command.CommandText = query;
                 command.Prepare();
-                return command.ExecuteScalar().ToString() != "";
+                return command.ExecuteScalar() != "";
             }
         }
     }
@@ -293,11 +293,11 @@ public class ConsumptionDAOImpl : IConsumptionDAO {
                         "WHERE ee.recid = cr.recid " +
                         "AND cc.cid = cr.cid " +
                         "AND  ee.time_stamp='" + record.TimeStamp + "' " +
-                        "AND  ee.ee.GID='" + record.GID + "' ";
+                        "AND  ee.GID='" + record.GID + "' ";
 
                 command.CommandText = query;
                 command.Prepare();
-                return command.ExecuteScalar().ToString() != "";
+                return command.ExecuteScalar() != "";                                       // ExecuteScalar returns null if not found
             }
         }
     }
@@ -316,7 +316,7 @@ public class ConsumptionDAOImpl : IConsumptionDAO {
         string query = "SELECT ee.gid, cc.mwh, ee.time_stamp " +
                 "FROM EES ee, CONSUMPTION_RECORDED cr, CONSUMPTION cc " +
                 "WHERE ee.recid = cr.recid AND cc.cid = cr.cid " +
-                "AND ee.recid IN " + FormatComplexArgument(ids);
+                "AND ee.recid IN " + CommonImpl.FormatComplexArgument(ids);
 
        
         return LoadConumptionRecordsMultipleByQuery(query);
@@ -373,7 +373,7 @@ public class ConsumptionDAOImpl : IConsumptionDAO {
                                             "AND ee.gid='{0}')" +
                                     "WHERE year_  >= {1})) ", gID, from.Substring(0, 4));
 
-        ExecuteDMLCommand(query);
+        ExecuteNonQueryCommand(query);
 
 
         string  leftYear    = from.Substring(0, 4),  
@@ -442,7 +442,7 @@ public class ConsumptionDAOImpl : IConsumptionDAO {
                         "AND cc.cid=cr.cid " +
                         "AND ee.gid='{0}')" +
                     "WHERE year_  >= {1})) ", gID, from.Substring(0, 4));
-        ExecuteDMLCommand(query);
+        ExecuteNonQueryCommand(query);
 
        query=String.Format("SELECT * " +
             "FROM initRows " +
@@ -478,7 +478,7 @@ public class ConsumptionDAOImpl : IConsumptionDAO {
                 "AND cc.cid=cr.cid " +
                 "AND ee.gid='{0}')" +
             "WHERE year_  <= {1})) ", gID, before.Substring(0, 4));
-        ExecuteDMLCommand(query);
+        ExecuteNonQueryCommand(query);
 
         query = String.Format("SELECT * " +
              "FROM initRows " +
@@ -524,10 +524,9 @@ public class ConsumptionDAOImpl : IConsumptionDAO {
     internal static int FindEEsPK(ConsumptionRecord record)
     {
 
-        string query = "SELECT ee.RECID FROM EES " +
-            "FROM  ees ee " +
-            "WHERE ee.time_stamp ='" + record.TimeStamp + "' " +
-            "AND   ee.gid='" + record.GID + "' ";
+        string query =  "SELECT ee.RECID FROM  ees ee " +
+                        "WHERE ee.time_stamp ='" + record.TimeStamp + "' " +
+                        "AND   ee.gid='" + record.GID + "' ";
 
         int retVal;
         using (IDbConnection connection = ConnectionUtil_Pooling.GetConnection())
@@ -551,8 +550,8 @@ public class ConsumptionDAOImpl : IConsumptionDAO {
             if (!CommonImpl.ContainsPK(entity.GID, ETableType.Geography))                               // Geo known?
             {
                 query = String.Format("INSERT INTO GEOGRAPHY_SUBSYSTEM(GID, GNAME) " +                  // Insert into geo. table
-                             "VALUES('{0}','1') ", entity.GID, entity.GID);
-                ExecuteDMLCommand(query);
+                             "VALUES('{0}','{1}') ", entity.GID, entity.GID);
+                ExecuteNonQueryCommand(query);
             }
 
             int recID;
@@ -569,30 +568,30 @@ public class ConsumptionDAOImpl : IConsumptionDAO {
                         int aID = RandomPKGenerator("SELECT AID FROM CONSUMPTION_AUDIT ", connection);
                         query = String.Format("INSERT INTO EES (RECID, TIME_STAMP, GID) " +                 // Make EES record      
                                         "VALUES({0}, '{1}', '{2}') ", recID, entity.TimeStamp, entity.GID);
-                        ExecuteDMLCommand(query, connection);
+                        ExecuteNonQueryCommand(query, connection);
 
                         query = String.Format("INSERT INTO CONSUMPTION_AUDIT (AID, DUPVAL) " +              // Make audit record
                                              "VALUES({0}, {1}) ", aID, entity.MWh);
-                        ExecuteDMLCommand(query, connection);
+                        ExecuteNonQueryCommand(query, connection);
 
                         query = String.Format("INSERT INTO CONSUMPTION_AUDITED(AID, RECID) " +              // Link them
                                              "VALUES({0}, {1}) ", aID, recID);
-                        ExecuteDMLCommand(query, connection);
+                        ExecuteNonQueryCommand(query, connection);
                     }
                     else               // Cannot be duplicate (handled by if statement), insert as original
                     {
                         int cID = RandomPKGenerator("SELECT CID FROM CONSUMPTION ", connection);
                         query = String.Format("INSERT INTO EES (RECID, TIME_STAMP, GID) " +                 // Make EES record      
                                      "VALUES({0}, '{1}', '{2}') ", recID, entity.TimeStamp, entity.GID);
-                        ExecuteDMLCommand(query, connection);
+                        ExecuteNonQueryCommand(query, connection);
 
                         query = String.Format("INSERT INTO CONSUMPTION (CID, MWH) " +                       // Make consumption record
                                          "VALUES({0}, {1}) ", cID, entity.MWh);
-                        ExecuteDMLCommand(query, connection);
+                        ExecuteNonQueryCommand(query, connection);
 
                         query = String.Format("INSERT INTO CONSUMPTION_RECORDED(CID, RECID) " +             // Link them
                                          "VALUES({0}, {1}) ", cID, recID);
-                         ExecuteDMLCommand(query, connection);
+                         ExecuteNonQueryCommand(query, connection);
                     }
                 }
                                          
@@ -616,24 +615,25 @@ public class ConsumptionDAOImpl : IConsumptionDAO {
                         command.CommandText = query;
                         command.Prepare();
 
+                        var res = command.ExecuteScalar();
                         int toDel;
-                        if (Int32.TryParse(command.ExecuteScalar().ToString(), out toDel))      // GetCheck audits to delete
+                        if (res != null &&  Int32.TryParse(command.ExecuteScalar().ToString(), out toDel))      // GetCheck audits to delete
                         {
-                            query =  "DELETE " +                                                  // Break audit connection
+                            query =  "DELETE " +                                                                // Break audit connection
                                      "FROM consumption_audited cad " +
                                      "WHERE cad.AID = " + toDel + " ";
-                            ExecuteDMLCommand(query, connection);
+                            ExecuteNonQueryCommand(query, connection);
 
-                            query = "DELETE " +                                                  // Delete audit record
+                            query = "DELETE " +                                                                 // Delete audit record
                                      "FROM consumption_audit ca " +
                                      "WHERE ca.AID = " + toDel + " ";
-                            ExecuteDMLCommand(query, connection);
+                            ExecuteNonQueryCommand(query, connection);
                         }
                     }
                 }
 
             }
-            else // Has original, audit it (has original => Has its EES Record to)
+            else // Has original, audit it (has original => Has its EES Record too)
             {
 
                 //Find original in EES
@@ -653,18 +653,20 @@ public class ConsumptionDAOImpl : IConsumptionDAO {
                     {
                         command.CommandText = query;
                         command.Prepare();
-                        if (command.ExecuteScalar().ToString() == "")                                   // Not audited
+
+                        var res = command.ExecuteScalar();
+                        if (res!=null)                                   // Not audited
                         {
     
                             int aID = RandomPKGenerator("SELECT AID FROM consumption_audit ", connection);
 
                             query = "INSERT INTO CONSUMPTION_AUDIT (AID, DUPVAL)" +                     // Audit it
                                     "VALUES (" + aID + "," + entity.MWh + ") ";
-                            ExecuteDMLCommand(query, connection);
+                            ExecuteNonQueryCommand(query, connection);
 
                             query = "INSERT INTO CONSUMPTION_AUDITED (AID, RECID) " +                    // Connect
                                     "VALUES (" + aID + "," + recId + ") ";
-                            ExecuteDMLCommand(query, connection);
+                            ExecuteNonQueryCommand(query, connection);
 
                             //Logic: Identical duplicates
                             var tmpTup = new Tuple<int, int>(entity.GetHour(), entity.MWh);
@@ -705,8 +707,8 @@ public class ConsumptionDAOImpl : IConsumptionDAO {
                 if (!CommonImpl.ContainsPK(entity.GID, ETableType.Geography))                               // Geo known?
                 {
                     query = String.Format("INSERT INTO GEOGRAPHY_SUBSYSTEM(GID, GNAME) " +                  // Insert into geo. table
-                                 "VALUES('{0}','1') ", entity.GID, entity.GID);
-                    ExecuteDMLCommand(query, connection);
+                                 "VALUES('{0}','{1}') ", entity.GID, entity.GID);
+                    ExecuteNonQueryCommand(query, connection);
                 }
 
                 int recID;
@@ -720,32 +722,32 @@ public class ConsumptionDAOImpl : IConsumptionDAO {
                         int aID = RandomPKGenerator("SELECT AID FROM CONSUMPTION_AUDIT ", connection);
                         query = String.Format("INSERT INTO EES (RECID, TIME_STAMP, GID) " +                 // Make EES record      
                                         "VALUES({0}, '{1}', '{2}') ", recID, entity.TimeStamp, entity.GID);
-                        ExecuteDMLCommand(query, connection);
+                        ExecuteNonQueryCommand(query, connection);
 
 
                         query = String.Format("INSERT INTO CONSUMPTION_AUDIT (AID, DUPVAL) " +              // Make audit record
                                          "VALUES({0}, {1}) ", aID, entity.MWh);
-                        ExecuteDMLCommand(query, connection);
+                        ExecuteNonQueryCommand(query, connection);
 
                         query = String.Format("INSERT INTO CONSUMPTION_AUDITED(AID, RECID) " +              // Link them
                                          "VALUES({0}, {1}) ", aID, recID);
-                        ExecuteDMLCommand(query, connection);
+                        ExecuteNonQueryCommand(query, connection);
                     }
                     else               // Cannot be duplicate (handled by if statement), insert as original
                     {
                         int cID = RandomPKGenerator("SELECT CID FROM CONSUMPTION ", connection);
                         query += String.Format("INSERT INTO EES (RECID, TIME_STAMP, GID) " +                 // Make EES record      
                                      "VALUES({0}, '{1}', '{2}') ", recID, entity.TimeStamp, entity.GID);
-                        ExecuteDMLCommand(query, connection);
+                        ExecuteNonQueryCommand(query, connection);
 
 
                         query += String.Format("INSERT INTO CONSUMPTION (CID, MWH) " +                       // Make consumption record
                                          "VALUES({0}, {1}) ", cID, entity.MWh);
-                        ExecuteDMLCommand(query, connection);
+                        ExecuteNonQueryCommand(query, connection);
 
                         query += String.Format("INSERT INTO CONSUMPTION_RECORDED(CID, RECID) " +             // Link them
                                          "VALUES({0}, {1}) ", cID, recID);
-                        ExecuteDMLCommand(query, connection);
+                        ExecuteNonQueryCommand(query, connection);
                     }                                                                                         
                                       
                     sharedUpdate.NewGeos.Add(entity.GID);                                               // Add new Geo. only if query passes; Has original? => Not new Geo.
@@ -765,18 +767,19 @@ public class ConsumptionDAOImpl : IConsumptionDAO {
                         command.CommandText = query;
                         command.Prepare();
 
+                        var res = command.ExecuteScalar();
                         int toDel;
-                        if (Int32.TryParse(command.ExecuteScalar().ToString(), out toDel))      // GetCheck audits to delete
+                        if (res != null && Int32.TryParse(command.ExecuteScalar().ToString(), out toDel))      // GetCheck audits to delete
                         {
                             query = "DELETE" +                                                  // Break audit connection
                                      "FROM consumption_audited cad " +
                                      "WHERE cad.AID = " + toDel + " ";
-                            ExecuteDMLCommand(query, connection);
+                            ExecuteNonQueryCommand(query, connection);
 
                             query = "DELETE" +                                                  // Delete audit record
                                      "FROM consumption_audit ca " +
                                      "WHERE ca.AID = " + toDel + " ";
-                            ExecuteDMLCommand(query, connection);
+                            ExecuteNonQueryCommand(query, connection);
                         }
                     }
 
@@ -798,17 +801,19 @@ public class ConsumptionDAOImpl : IConsumptionDAO {
                     {
                         command.CommandText = query;
                         command.Prepare();
-                        if (command.ExecuteScalar().ToString() == "")                                   // Not audited
+
+                        var res = command.ExecuteScalar();
+                        if (res != null)                                   // Not audited
                         {
                             int aID = RandomPKGenerator("SELECT AID FROM consumption_audit ", connection);
 
                             query = "INSERT INTO CONSUMPTION_AUDIT (AID, DUPVAL) " +                     // Audit it
                                     "VALUES (" + aID + "," + entity.MWh + ") ";
-                            ExecuteDMLCommand(query, connection);
+                            ExecuteNonQueryCommand(query, connection);
 
                             query = "INSERT INTO CONSUMPTION_AUDITED (AID, RECID) " +                    // Connect
                                     "VALUES (" + aID + "," + recId + ") ";
-                            ExecuteDMLCommand(query, connection);
+                            ExecuteNonQueryCommand(query, connection);
 
                             //Logic: Identical duplicates
                             var tmpTup = new Tuple<int, int>(entity.GetHour(), entity.MWh);

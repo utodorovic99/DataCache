@@ -14,7 +14,7 @@ using Common_Project.Classes;
 
 public class ConsumptionService {
 
-	public IConsumptionDAO m_IConsumptionDAO = new ConsumptionDAOImpl();
+	private IConsumptionDAO m_IConsumptionDAO = new ConsumptionDAOImpl();
 
 	public ConsumptionService(){
 
@@ -53,19 +53,58 @@ public class ConsumptionService {
 	/// <param name="consumptionRecords"></param>
 	public ConsumptionUpdate HandleStoreConsumption(List<ConsumptionRecord> consumptionRecords)
 	{
-		m_IConsumptionDAO.StoreConsumption(consumptionRecords);
-		return null;
+		return m_IConsumptionDAO.StoreConsumption(consumptionRecords);
 	}
 
 	public ConsumptionUpdate HandleStoreConsumption(ConsumptionRecord consumptionRecords)
 	{
-		m_IConsumptionDAO.StoreConsumption(consumptionRecords);
-		return null;
+		return m_IConsumptionDAO.StoreConsumption(consumptionRecords);
 	}
 
 	public List<ConsumptionRecord> HandleFindConsumptionAll()
 	{
 		return (List<ConsumptionRecord>)m_IConsumptionDAO.FindAll();
+	}
+
+	public List<ConsumptionRecord> HandleFindAllByCID(IEnumerable<string> keys)
+    {
+		return (List<ConsumptionRecord>)m_IConsumptionDAO.FindAllById(keys);
+	}
+
+	public ConsumptionRecord HandleFindSingleByCID(string key)
+    {
+		return m_IConsumptionDAO.FindById(key);
+    }
+
+	public int HandleCount()
+	{
+		return m_IConsumptionDAO.Count();
+	}
+
+	public bool HandleExistsByContent(ConsumptionRecord target)
+    {
+		return m_IConsumptionDAO.ExistsByContent(target);
+
+	}
+
+	public bool HandleExistsByCID(string key)
+    {
+		return m_IConsumptionDAO.ExistsById(key);
+    }
+
+	public void HandleDeleteByContent(ConsumptionRecord target)
+    {
+		 m_IConsumptionDAO.Delete(target);
+    }
+
+	public void HandleDeleteByCID(string cID)
+    {
+		m_IConsumptionDAO.DeleteById(cID);
+    }
+
+	public void HandleDeleteAll()
+	{
+		m_IConsumptionDAO.DeleteAll();
 	}
 
 }//end ConsumptionService

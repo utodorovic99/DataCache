@@ -83,10 +83,15 @@
     <Compile Include="DAO\Impl\CommonImpl.cs" />
     <Compile Include="DAO\Impl\ConsumptionDAOImpl.cs" />
     <Compile Include="DAO\Impl\GeographyDaoImpl.cs" />
-    <Compile Include="DistributedCallHandler\AuditUIHandler.cs" />
-    <Compile Include="DistributedCallHandler\ConsumptionUIHandler.cs" />
-    <Compile Include="DistributedCallHandler\GeographyUIHandler.cs" />
-    <Compile Include="DistributedCallHandler\MainUIHandler.cs" />
+    <Compile Include="DBUIHandler\AuditUIHandler.cs" />
+    <Compile Include="DBUIHandler\ConsumptionUIHandler.cs" />
+    <Compile Include="DBUIHandler\GeographyUIHandler.cs" />
+    <Compile Include="DBUIHandler\MainUIHandler.cs" />
+    <Compile Include="Exceptions\ConsumptionExceptions\ConsumptionNotFoundException.cs" />
+    <Compile Include="Exceptions\ExceptionAbstraction\DBObjectNotFoundException.cs" />
+    <Compile Include="Exceptions\ExceptionAbstraction\PrimaryKeyConstraintViolationException.cs" />
+    <Compile Include="Exceptions\ExceptionAbstraction\StillAttachedException.cs" />
+    <Compile Include="Exceptions\GeographyExceptions\GeoRecordNotFoundException.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Service\AuditService.cs" />
@@ -98,7 +103,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="DistributedDBCallHandler\" />
     <Folder Include="DTO\" />
+    <Folder Include="Exceptions\AuditExceptions\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common_Project\Common_Project.csproj">
