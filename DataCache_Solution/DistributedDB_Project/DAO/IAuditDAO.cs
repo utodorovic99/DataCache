@@ -10,9 +10,17 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
+using Common_Project.Classes;
 
+public interface IAuditDAO: ICRUDDao<AuditRecord, string>
+{
+    IEnumerable<AuditRecord> DuplicatesAll();
+    IEnumerable<AuditRecord> DuplicatesAllByGeo(string gID);
 
+    IEnumerable<AuditRecord> MissesAll();
 
-public interface IAuditDAO  {
+    IEnumerable<AuditRecord> MissesAllByGeo(string gID);
+
+    IEnumerable<AuditRecord> DupsAndMissesByGeo(string gID);
 
 }//end IAuditDAO

@@ -350,7 +350,7 @@ public class GeographyDaoImpl : IGeographyDAO {
                 if(Convert.ToInt32(command.ExecuteScalar())==0)
                 {
                     //To add
-                    query = String.Format( "INSERT INTO geography_subsystem (GID,GNAME)" +
+                    query = String.Format( "INSERT INTO geography_subsystem (GID,GNAME) " +
                                             "VALUES ('{0}', '{1}') ", entity.GID, entity.GName);
                     command.CommandText = query;
                     command.Prepare();
@@ -386,7 +386,7 @@ public class GeographyDaoImpl : IGeographyDAO {
                     if (Convert.ToInt32(command.ExecuteScalar()) == 0)
                     {
                         //To add
-                        query = String.Format("INSERT INTO geography_subsystem (GID,GNAME)" +
+                        query = String.Format("INSERT INTO geography_subsystem (GID,GNAME) " +
                                                 "VALUES ('{0}', '{1}') ", entity.GID, entity.GName);
                         command.CommandText = query;
                         command.Prepare();
@@ -397,19 +397,19 @@ public class GeographyDaoImpl : IGeographyDAO {
         }
     }
 
-    public void SingleGeoUpdate(GeoRecord newGeo)
+    public void SingleGeoUpdate(string oldGeoID, string newGeoID)
     {
         using (IDbConnection connection = ConnectionUtil_Pooling.GetConnection())
         {
             connection.Open();
 
-                if(ExistsById(newGeo.GID, connection))
+                if(ExistsById(oldGeoID, connection))
                 {
                     using (IDbCommand command = connection.CreateCommand())
                     {
                         string query = String.Format("UPDATE geography_subsystem " +
                                                      "SET GNAME = '{0}' " +
-                                                     "WHERE GID = '{1}' ", newGeo.GName, newGeo.GID);
+                                                     "WHERE GID = '{1}' ", newGeoID, oldGeoID);
 
                         command.CommandText = query;
                         command.Prepare();
@@ -419,8 +419,8 @@ public class GeographyDaoImpl : IGeographyDAO {
                 }
                 else
                 {
-                    throw new PrimaryKeyConstraintViolationException(newGeo.GID, "geography_subsystem", "Primary key(GID): " +
-                                                            newGeo.GID + " target key not found: geography_subsystem");
+                    throw new PrimaryKeyConstraintViolationException(newGeoID, "geography_subsystem", "Primary key(GID): " +
+                                                            newGeoID + " target key not found: geography_subsystem");
                 }
             
         }

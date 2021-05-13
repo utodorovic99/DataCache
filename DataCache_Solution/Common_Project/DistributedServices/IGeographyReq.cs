@@ -12,23 +12,27 @@ using System.Text;
 using System.IO;
 using Common_Project.Classes;
 using CacheControler_Project.Enums;
+using System.ServiceModel;
 
 namespace Common_Project.DistributedServices
 {
 
-
+	[ServiceContract]
 	public interface IGeographyReq
 	{
 
 		/// 
 		/// <param name="oldID"></param>
 		/// <param name="newID"></param>
+		[OperationContract]
 		EUpdateGeoStatus GeoEntityUpdate(string oldID, string newID);
 
 		/// 
 		/// <param name="gRecord"></param>
+		[OperationContract]
 		bool GeoEntityWrite(GeoRecord gRecord);
 
+		[OperationContract]
 		List<GeoRecord> ReadGeoContent();
 	}//end IGeographyReq
 }

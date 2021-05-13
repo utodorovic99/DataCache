@@ -87,25 +87,26 @@
     <Compile Include="DBUIHandler\ConsumptionUIHandler.cs" />
     <Compile Include="DBUIHandler\GeographyUIHandler.cs" />
     <Compile Include="DBUIHandler\MainUIHandler.cs" />
+    <Compile Include="DistributedDBCallHandler\DataCacheClientService.cs" />
+    <Compile Include="Exceptions\AuditExceptions\AuditNotFoundException.cs" />
     <Compile Include="Exceptions\ConsumptionExceptions\ConsumptionNotFoundException.cs" />
     <Compile Include="Exceptions\ExceptionAbstraction\DBObjectNotFoundException.cs" />
+    <Compile Include="Exceptions\ExceptionAbstraction\ForbiddenOrderException.cs" />
     <Compile Include="Exceptions\ExceptionAbstraction\PrimaryKeyConstraintViolationException.cs" />
     <Compile Include="Exceptions\ExceptionAbstraction\StillAttachedException.cs" />
     <Compile Include="Exceptions\GeographyExceptions\GeoRecordNotFoundException.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Service\AuditService.cs" />
-    <Compile Include="Service\ConsumptionService.cs" />
-    <Compile Include="Service\GeographyService.cs" />
+    <Compile Include="Services\AuditService.cs" />
+    <Compile Include="Services\ConsumptionService.cs" />
+    <Compile Include="Services\GeographyService.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="DistributedDBCallHandler\" />
     <Folder Include="DTO\" />
-    <Folder Include="Exceptions\AuditExceptions\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common_Project\Common_Project.csproj">

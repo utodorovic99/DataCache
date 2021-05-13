@@ -211,7 +211,7 @@ namespace DistributedDB_Project.DistributedCallHandler
             string newGName = Console.ReadLine();
             try
             {
-                geographyService.HandleSingleGeoUpdate(new GeoRecord(targetGID, newGName));
+                geographyService.HandleSingleGeoUpdate(targetGID, newGName);
                 Console.WriteLine("\t\t<< RECORD UPDATE SUCCESFULL >>\n");
             }
             catch(PrimaryKeyConstraintViolationException ex)

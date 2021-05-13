@@ -23,8 +23,8 @@ namespace UI_Project.Classes
     public class UI : IUIOps
     {
 
-        public CacheControler m_CacheControler;
-        public FileControler m_FileControler;
+        private CacheControler m_CacheControler;
+        private FileControler m_FileControler;
 
         public UI()
         {
@@ -38,8 +38,7 @@ namespace UI_Project.Classes
         }
 
         public List<AuditRecord> GetAuditEntities()
-        {
-
+        { 
             return null;
         }
 
@@ -53,13 +52,11 @@ namespace UI_Project.Classes
         /// <param name="readReq"></param>
         public Tuple<EConcumptionReadStatus, List<ConsumptionRecord>> InitConsumptionRead(DSpanGeoReq dSpanGeoReq)
         {
-
-            return null;
+            return m_CacheControler.DSpanGeoConsumptionRead(dSpanGeoReq);
         }
 
         public InitData InitDataLoad()
         {
-
             return null;
         }
 

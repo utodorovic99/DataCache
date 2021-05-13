@@ -11,11 +11,14 @@ using System.Collections.Generic;
 using System.Text;
 using System.IO;
 using Common_Project.Classes;
+using System.ServiceModel;
 
 namespace Common_Project.DistributedServices
 {
+    [ServiceContract]
     public interface IAuditReq
     {
+        [OperationContract]
         List<AuditRecord> ReadAuditContnet();
     }//end IAuditReq
 }

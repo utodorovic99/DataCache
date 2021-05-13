@@ -13,50 +13,102 @@ using System.IO;
 using Common_Project.Classes;
 using Common_Project.DistributedServices;
 using CacheControler_Project.Enums;
+using System.ServiceModel;
+using System.Diagnostics;
 
 namespace ConnectionControler_Project.Classes
 {
     public class ConnectionControler : IDBReq
     {
+        ChannelFactory<Common_Project.DistributedServices.IDBReq> consumptionChannel;
+        IDBReq proxy;
 
         public ConnectionControler()
         {
-
+           consumptionChannel = new ChannelFactory<Common_Project.DistributedServices.IDBReq>("DataCacheClientService");
+           proxy = consumptionChannel.CreateChannel();
         }
 
         ~ConnectionControler()
         {
-
         }
 
         public ConsumptionUpdate OstvConsumptionDBWrite(List<ConsumptionRecord> cRecords)
         {
-            throw new NotImplementedException();
+            //try
+            //{
+                return proxy.OstvConsumptionDBWrite(cRecords);
+            //}
+            //catch(Exception e)
+            //{
+                //Trace.WriteLine(e.ToString());  // Later throw custom exception or catch on other component
+            //}
+            //return new ConsumptionUpdate();
         }
 
         public List<ConsumptionRecord> ConsumptionReqPropagate(DSpanGeoReq dSpanGeoReq)
         {
-            throw new NotImplementedException();
+            try
+            {
+                return proxy.ConsumptionReqPropagate(dSpanGeoReq);
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(e.ToString());  // Later throw custom exception or catch on other component
+            }
+            return new List<ConsumptionRecord>();
         }
 
         public List<AuditRecord> ReadAuditContnet()
         {
-            throw new NotImplementedException();
+            try
+            {
+                return proxy.ReadAuditContnet();
+            }
+            catch(Exception e)
+            {
+                Trace.WriteLine(e.ToString()); // Later throw custom exception or catch on other component
+            }
+            return new List<AuditRecord>();     
         }
 
-        public EUpdateGeoStatus GeoEntityUpdate(string oldID, string newID)
+        public EUpdateGeoStatus GeoEntityUpdate(string oldName, string newName)
         {
-            throw new NotImplementedException();
+            try
+            {
+                return proxy.GeoEntityUpdate(oldName, newName);
+            }
+            catch(Exception e)
+            {
+                Trace.WriteLine(e.ToString());  // Later throw custom exception or catch on other component
+            }
+            return EUpdateGeoStatus.DBWriteFailed;
         }
 
         public bool GeoEntityWrite(GeoRecord gRecord)
         {
-            throw new NotImplementedException();
+            try
+            {
+                return proxy.GeoEntityWrite(gRecord);
+            }
+            catch(Exception e)
+            {
+                Trace.WriteLine(e.ToString()); // Later throw custom exception or catch on other component
+            }
+            return false;
         }
 
         public List<GeoRecord> ReadGeoContent()
         {
-            throw new NotImplementedException();
+            try
+            {
+                return proxy.ReadGeoContent();
+            }
+            catch(Exception e)
+            {
+                Trace.WriteLine(e.ToString());  // Later throw custom exception or catch on other component
+            }
+            return new List<GeoRecord>();
         }
     }//end ConnectionControler
 }

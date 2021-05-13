@@ -17,12 +17,19 @@ namespace Common_Project.Classes
     {
 
         private string gID;
-        private int[] hoursOut;
         private string timeStamp;
+        private int dupVal;
 
         public AuditRecord()
         {
 
+        }
+
+        public AuditRecord(string gID, string timeStamp, int dupVal)
+        {
+            this.gID = gID;
+            this.timeStamp = timeStamp;
+            this.dupVal = dupVal;
         }
 
         ~AuditRecord()
@@ -42,18 +49,6 @@ namespace Common_Project.Classes
             }
         }
 
-        public int[] HoursOut
-        {
-            get
-            {
-                return hoursOut;
-            }
-            set
-            {
-                hoursOut = value;
-            }
-        }
-
         public string TimeStamp
         {
             get
@@ -64,6 +59,30 @@ namespace Common_Project.Classes
             {
                 timeStamp = value;
             }
+        }
+
+        public int DupVal
+        {
+            get
+            {
+                return dupVal;
+            }
+            set
+            {
+                dupVal = value;
+            }
+        }
+
+        public override string ToString()
+        {
+            string outStr = String.Format("Audit record GID: {0}\tTimeStamp: {1}\tType: ",gID, timeStamp);
+            if(DupVal==-1)
+            { outStr += "Miss"; }
+            else
+            {
+                outStr += "Duplicate\tValue: " + DupVal;
+            }
+            return outStr;
         }
 
     }//end AuditRecord

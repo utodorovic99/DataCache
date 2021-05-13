@@ -52,41 +52,41 @@ namespace CacheControler_Project.Classes
             return EPostGeoEntityStatus.Success;
         }
 
-        public List<AuditRecord> CachedAudit
-        {
-            get
-            {
-                return cachedAudit;
-            }
-            set
-            {
-                cachedAudit = value;
-            }
-        }
+        //public List<AuditRecord> CachedAudit
+        //{
+        //    get
+        //    {
+        //        return cachedAudit;
+        //    }
+        //    set
+        //    {
+        //        cachedAudit = value;
+        //    }
+        //}
 
-        public Dictionary<DSpanGeoReq, CacheHit> CachedConsumption
-        {
-            get
-            {
-                return cachedConsumption;
-            }
-            set
-            {
-                cachedConsumption = value;
-            }
-        }
+        //public Dictionary<DSpanGeoReq, CacheHit> CachedConsumption
+        //{
+        //    get
+        //    {
+        //        return cachedConsumption;
+        //    }
+        //    set
+        //    {
+        //        cachedConsumption = value;
+        //    }
+        //}
 
-        public Dictionary<string, string> CachedGeo
-        {
-            get
-            {
-                return cachedGeo;
-            }
-            set
-            {
-                cachedGeo = value;
-            }
-        }
+        //public Dictionary<string, string> CachedGeo
+        //{
+        //    get
+        //    {
+        //        return cachedGeo;
+        //    }
+        //    set
+        //    {
+        //        cachedGeo = value;
+        //    }
+        //}
 
         private int CacheGarbageCollector()
         {
@@ -132,7 +132,7 @@ namespace CacheControler_Project.Classes
             return null;
         }
 
-        public List<GeoRecord> InitGeoRecordLoad()
+        public List<string> InitGeoRecordLoad()
         {
 
             return null;
@@ -157,10 +157,10 @@ namespace CacheControler_Project.Classes
 
         /// 
         /// <param name="dSpanGeoReq"></param>
-        public int DSpanGeoConsumptionRead(DSpanGeoReq dSpanGeoReq)
+        public Tuple<EConcumptionReadStatus, List<ConsumptionRecord>> DSpanGeoConsumptionRead(DSpanGeoReq dSpanGeoReq)
         {
 
-            return 0;
+            return null;
         }
 
     }//end CacheControler

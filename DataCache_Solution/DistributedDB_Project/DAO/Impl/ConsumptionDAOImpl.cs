@@ -50,7 +50,6 @@ public class ConsumptionDAOImpl : IConsumptionDAO
             {
                 command.CommandText = query;
                 command.Prepare();
-
                 return Convert.ToInt32(command.ExecuteScalar());
             }
         }
@@ -68,12 +67,11 @@ public class ConsumptionDAOImpl : IConsumptionDAO
                 command.Prepare();
                 using (IDataReader reader = command.ExecuteReader())
                 {
-                    reader.Read();
-                    try
+                    if(reader.Read())
                     {
                         retVal = new ConsumptionRecord(reader.GetString(0), reader.GetInt32(1), reader.GetString(2));
                     }
-                    catch(ArgumentNullException )
+                    else
                     {
                         //Nothing to read
                         throw new ConsumptionNotFoundException("Invalid search arguments", "", "");
@@ -117,12 +115,13 @@ public class ConsumptionDAOImpl : IConsumptionDAO
                 command.CommandText = query;
                 command.Prepare();
                 try     
-                { 
+                {
                     command.ExecuteNonQuery(); 
                 }
                 catch (OracleException oe)
                 {
-                    throw oe; 
+                    Console.WriteLine("ERROR: {0}", oe.Message);
+                    //throw oe; 
                 }
             }
         }
@@ -148,8 +147,6 @@ public class ConsumptionDAOImpl : IConsumptionDAO
       
     }
 
-
-
     public void Delete(ConsumptionRecord entity)
     {
         int targetRECID;
@@ -162,12 +159,15 @@ public class ConsumptionDAOImpl : IConsumptionDAO
                 "FROM EES ee, CONSUMPTION cc, CONSUMPTION_RECORDED cr " +    // Get targetRECID for entity
                 "WHERE cr.recid = ee.recid " +
                 "AND cr.cid = cc.cid " +
-                "AND ee.TIME_STAMP = '" + entity.TimeStamp + "'" +
+                "AND ee.TIME_STAMP = '" + entity.TimeStamp + "' " +
                 "AND ee.GID = '" + entity.GID + "' " +
                 "AND cc.MWH =" + entity.MWh;
                 command.CommandText = query;
                 command.Prepare();
-                targetRECID= Convert.ToInt32(command.ExecuteScalar());        
+                var tmpObject = command.ExecuteScalar();
+                if (tmpObject == null) throw new ConsumptionNotFoundException("Invalid search arguments", "", "");
+
+                targetRECID = Convert.ToInt32(tmpObject);        
             }
         }
 
@@ -178,16 +178,20 @@ public class ConsumptionDAOImpl : IConsumptionDAO
     public void DeleteAll()
     {
         // Read documentation for delete logic
-        string  query = "DELETE consumption_audited ";
-        ExecuteNonQueryCommand(query);
-        query = "DELETE consumption_recorded ";
-        ExecuteNonQueryCommand(query);
-        query = "DELETE consumption_audit ";
-        ExecuteNonQueryCommand(query);
-        query = "DELETE consumption ";
-        ExecuteNonQueryCommand(query);
-        query = "DELETE ees ";
-        ExecuteNonQueryCommand(query);
+
+        using (IDbConnection connection = ConnectionUtil_Pooling.GetConnection())
+        {
+            string query = "DELETE consumption_audited ";
+            ExecuteNonQueryCommand(query, connection);
+            query = "DELETE consumption_recorded ";
+            ExecuteNonQueryCommand(query, connection);
+            query = "DELETE consumption_audit ";
+            ExecuteNonQueryCommand(query, connection);
+            query = "DELETE consumption ";
+            ExecuteNonQueryCommand(query, connection);
+            query = "DELETE ees ";
+            ExecuteNonQueryCommand(query, connection);
+        }
     }
 
     public void DeleteById(string targetRECID)
@@ -238,8 +242,8 @@ public class ConsumptionDAOImpl : IConsumptionDAO
                          "WHERE cc.CID IN " + CommonImpl.FormatComplexArgument(toDeleteCIDs) + " ";
                 ExecuteNonQueryCommand(query, connection);
 
-                query = "DELETE" +                                                  // Break audit connections
-                         "FROM consumption_audited ca" +
+                query = "DELETE " +                                                  // Break audit connections
+                         "FROM consumption_audited ca " +
                          "WHERE ca.RECID = " + targetRECID + " ";
                 ExecuteNonQueryCommand(query, connection);
 
@@ -274,7 +278,7 @@ public class ConsumptionDAOImpl : IConsumptionDAO
 
                 command.CommandText = query;
                 command.Prepare();
-                return command.ExecuteScalar() != "";
+                return command.ExecuteScalar() != null;
             }
         }
     }
@@ -297,7 +301,7 @@ public class ConsumptionDAOImpl : IConsumptionDAO
 
                 command.CommandText = query;
                 command.Prepare();
-                return command.ExecuteScalar() != "";                                       // ExecuteScalar returns null if not found
+                return command.ExecuteScalar() != null;                                       // ExecuteScalar returns null if not found
             }
         }
     }
@@ -306,7 +310,7 @@ public class ConsumptionDAOImpl : IConsumptionDAO
     {
         string query = "SELECT ee.gid, cc.mwh, ee.time_stamp " +
                 "FROM EES ee, CONSUMPTION_RECORDED cr, CONSUMPTION cc " +
-                "WHERE ee.recid = cr.recid AND cc.cid = cr.cid";
+                "WHERE ee.recid = cr.recid AND cc.cid = cr.cid ";
 
         return LoadConumptionRecordsMultipleByQuery(query);
     }
@@ -498,7 +502,6 @@ public class ConsumptionDAOImpl : IConsumptionDAO
  
     private int RandomPKGenerator(string queryForPKs, IDbConnection connection)
      {
-
         var exclude = new HashSet<int>();
         using (IDbCommand command = connection.CreateCommand())
         {
@@ -512,16 +515,16 @@ public class ConsumptionDAOImpl : IConsumptionDAO
                 }
             }
         }
-      
+  
         // Possible improvement: Switching whole system from int to unsigned for bigger PK range
-        var range = Enumerable.Range(0, Int32.MaxValue).Where(i => !exclude.Contains(i));
+        var range = Enumerable.Range(1, Int32.MaxValue).Where(i => !exclude.Contains(i));
 
         var rand = new System.Random();
         int index = rand.Next(0, 100 - exclude.Count);
         return range.ElementAt(index);
     }
 
-    internal static int FindEEsPK(ConsumptionRecord record)
+    internal static int FindEEsPK(ConsumptionRecord record, IDbConnection connection )
     {
 
         string query =  "SELECT ee.RECID FROM  ees ee " +
@@ -529,162 +532,257 @@ public class ConsumptionDAOImpl : IConsumptionDAO
                         "AND   ee.gid='" + record.GID + "' ";
 
         int retVal;
-        using (IDbConnection connection = ConnectionUtil_Pooling.GetConnection())
+        using (IDbCommand command = connection.CreateCommand())
         {
-            connection.Open();
-            using (IDbCommand command = connection.CreateCommand())
-            {
-                command.CommandText = query;
-                command.Prepare();
-                if (Int32.TryParse(command.ExecuteScalar().ToString(), out retVal)) retVal = -1;
-            }
+            command.CommandText = query;
+            command.Prepare();
+            var tmpObj = command.ExecuteScalar();
+            if (tmpObj == null) return -1;
+            if (!Int32.TryParse(tmpObj.ToString(), out retVal)) return -1;
+            return retVal;
         }
-        return retVal;
     }
 
     public void Save(ConsumptionRecord entity)
     {
         sharedUpdate = new ConsumptionUpdate();
-            string query = "";
+        string query = "";
+        int recID, cID, aID, chkVal;
 
-            if (!CommonImpl.ContainsPK(entity.GID, ETableType.Geography))                               // Geo known?
+        using (IDbConnection connection = ConnectionUtil_Pooling.GetConnection())
+        {
+            if (!CommonImpl.ContainsPK(entity.GID, ETableType.Geography))                                   // Geo known?
             {
-                query = String.Format("INSERT INTO GEOGRAPHY_SUBSYSTEM(GID, GNAME) " +                  // Insert into geo. table
-                             "VALUES('{0}','{1}') ", entity.GID, entity.GID);
+                query = String.Format("INSERT INTO GEOGRAPHY_SUBSYSTEM(GID, GNAME) " +                      // Insert into geo. table
+                                "VALUES('{0}','{1}') ", entity.GID, entity.GID);
                 ExecuteNonQueryCommand(query);
+                
+                sharedUpdate.NewGeos.Add(entity.GID);                                                       // Add new Geo. 
             }
 
-            int recID;
-            if (FindByCountryAndDate(entity.GID, entity.TimeStamp).Count == 0)                          //No original, insert 
+            connection.Open();
+            recID = FindEEsPK(entity, connection);
+            if(recID ==-1)                                                                                  // Is a first miss or first consumptipn
             {
-                using (IDbConnection connection = ConnectionUtil_Pooling.GetConnection())
+                recID = RandomPKGenerator("SELECT RECID FROM EES ", connection);                            // Insert EES (coomon for consumption & audit)
+                query = String.Format("INSERT INTO EES (RECID, TIME_STAMP, GID) " +                         
+                "VALUES({0},'{1}', '{2}') ", recID, entity.TimeStamp, entity.GID );
+                ExecuteNonQueryCommand(query, connection);
+
+                if (entity.MWh==-1)  // First audit (miss)
                 {
-                    connection.Open();
-                    recID = RandomPKGenerator("SELECT RECID FROM EES ", connection);
+                    aID = RandomPKGenerator("SELECT AID FROM CONSUMPTION_AUDIT ", connection);
+                    query = String.Format("INSERT INTO CONSUMPTION_AUDIT (AID, DUPVAL) " +                  // Make audit record
+                                        "VALUES({0}, {1}) ", aID, entity.MWh);
+                    ExecuteNonQueryCommand(query, connection);
 
-                
-                    if (entity.MWh == -1)  // Is a miss, record it in audit with value -1
+                    query = String.Format("INSERT INTO CONSUMPTION_AUDITED(AID, RECID) " +                  // Link them
+                                        "VALUES({0}, {1}) ", aID, recID);
+                    ExecuteNonQueryCommand(query, connection);
+                    if(!sharedUpdate.DupsAndMisses.ContainsKey(entity.GID))
                     {
-                        int aID = RandomPKGenerator("SELECT AID FROM CONSUMPTION_AUDIT ", connection);
-                        query = String.Format("INSERT INTO EES (RECID, TIME_STAMP, GID) " +                 // Make EES record      
-                                        "VALUES({0}, '{1}', '{2}') ", recID, entity.TimeStamp, entity.GID);
-                        ExecuteNonQueryCommand(query, connection);
-
-                        query = String.Format("INSERT INTO CONSUMPTION_AUDIT (AID, DUPVAL) " +              // Make audit record
-                                             "VALUES({0}, {1}) ", aID, entity.MWh);
-                        ExecuteNonQueryCommand(query, connection);
-
-                        query = String.Format("INSERT INTO CONSUMPTION_AUDITED(AID, RECID) " +              // Link them
-                                             "VALUES({0}, {1}) ", aID, recID);
-                        ExecuteNonQueryCommand(query, connection);
+                        sharedUpdate.DupsAndMisses.Add(entity.GID, 
+                            new Tuple<List<Tuple<int, int>>, List<int>>(new List<Tuple<int, int>>(), new List<int>()));
                     }
-                    else               // Cannot be duplicate (handled by if statement), insert as original
+
+                    sharedUpdate.DupsAndMisses[entity.GID].Item2.Add(entity.GetHour());
+                }
+                else                // First consumption
+                {
+                    cID = RandomPKGenerator("SELECT CID FROM CONSUMPTION ", connection);
+                    query = String.Format("INSERT INTO CONSUMPTION (CID, MWH) " +                       // Make consumption record
+                                        "VALUES({0}, {1}) ", cID, entity.MWh);
+                    ExecuteNonQueryCommand(query, connection);
+
+                    query = String.Format("INSERT INTO CONSUMPTION_RECORDED(CID, RECID) " +             // Link them
+                                        "VALUES({0}, {1}) ", cID, recID);
+                    ExecuteNonQueryCommand(query, connection);
+                }
+            }
+            else // Has audits or consumptions
+            {
+
+                query = String.Format("SELECT cad.RECID " +                                     //Check has original consumption 
+                           "FROM consumption_audited cad LEFT OUTER JOIN ees ee " +
+                           "ON cad.RECID = ee.RECID LEFT OUTER JOIN consumption_audit ca " +
+                           "ON ca.AID = cad.AID " +
+                           "WHERE cad.RECID = {0} " +
+                           "AND ca.DUPVAL = {1} ", recID, entity.MWh);
+
+                using (IDbCommand command = connection.CreateCommand())
+                {
+                    command.CommandText = query;
+                    command.Prepare();
+                    var tmpObj = command.ExecuteScalar();
+                    if (tmpObj == null) chkVal=-1;
+                    else if (!Int32.TryParse(tmpObj.ToString(), out chkVal)) chkVal= -1;
+                }
+
+                if (entity.MWh == -1)  // Is a miss
+                { 
+                
+                    if(chkVal==-1)     // And has no original consumption
                     {
-                        int cID = RandomPKGenerator("SELECT CID FROM CONSUMPTION ", connection);
-                        query = String.Format("INSERT INTO EES (RECID, TIME_STAMP, GID) " +                 // Make EES record      
-                                     "VALUES({0}, '{1}', '{2}') ", recID, entity.TimeStamp, entity.GID);
-                        ExecuteNonQueryCommand(query, connection);
+                        query = String.Format("SELECT count(*) " +
+                                           "FROM consumption_audited cad LEFT OUTER JOIN ees ee " +
+                                           "ON cad.RECID = ee.RECID LEFT OUTER JOIN consumption_audit ca " +
+                                           "ON ca.AID = cad.AID " +
+                                           "WHERE cad.RECID = {0} " +
+                                           "AND ca.DUPVAL = {1} ", recID, entity.MWh);
+
+                        using (IDbCommand command = connection.CreateCommand())
+                        {
+                            command.CommandText = query;
+                            command.Prepare();
+
+                            if (Int32.Parse(command.ExecuteScalar().ToString())==0)   // Not the exact one
+                            {
+                                
+                                aID = RandomPKGenerator("SELECT AID FROM CONSUMPTION_AUDIT ", connection);
+                                query = String.Format("INSERT INTO CONSUMPTION_AUDIT (AID, DUPVAL) " +              // Make audit record
+                                                    "VALUES({0}, {1}) ", aID, entity.MWh);
+                                ExecuteNonQueryCommand(query, connection);
+
+                                query = String.Format("INSERT INTO CONSUMPTION_AUDITED(AID, RECID) " +              // Link them
+                                                    "VALUES({0}, {1}) ", aID, recID);
+                                ExecuteNonQueryCommand(query, connection);
+
+                                if (!sharedUpdate.DupsAndMisses.ContainsKey(entity.GID))
+                                {
+                                    sharedUpdate.DupsAndMisses.Add(entity.GID,
+                                        new Tuple<List<Tuple<int, int>>, List<int>>(new List<Tuple<int, int>>(), new List<int>()));
+                                }
+                                sharedUpdate.DupsAndMisses[entity.GID].Item2.Add(entity.GetHour());
+                            }
+
+                           
+                        }
+                    }
+                    //Miss and has original value => Ignore
+                }
+                else                   // Duplicate or original after misses
+                {
+    
+  
+                    if(chkVal!=-1)   // Original exists
+                    {
+                        query=String.Format( "SELECT count(*) "+
+                                             "FROM consumption_recorded crd LEFT OUTER JOIN consumption cr ON crd.CID = cr.CID "+
+                                             "WHERE crd.RECID = {0} "+
+                                             "AND cr.MWH = {1} "+ chkVal, entity.MWh);
+                        using (IDbCommand command = connection.CreateCommand())
+                        {
+                            command.CommandText = query;
+                            command.Prepare();
+
+                            if(Int32.Parse(command.ExecuteScalar().ToString())==0 )                  // Duplicate (not same MWH)
+                            {
+                                aID = RandomPKGenerator("SELECT AID FROM CONSUMPTION_AUDIT ", connection);
+
+                                query = String.Format("INSERT INTO CONSUMPTION_AUDIT (AID, DUPVAL) " +              // Make audit record
+                                                    "VALUES({0}, {1}) ", aID, entity.MWh);
+                                ExecuteNonQueryCommand(query, connection);
+
+                                query = String.Format("INSERT INTO CONSUMPTION_AUDITED(AID, RECID) " +              // Link them
+                                                    "VALUES({0}, {1}) ", aID, recID);
+                                ExecuteNonQueryCommand(query, connection);
+
+
+                                if (!sharedUpdate.DupsAndMisses[entity.GID].Item2.Contains(entity.GetHour()))        // Not first
+                                {
+                                    sharedUpdate.DupsAndMisses[entity.GID].Item1.Add(new Tuple<int, int> ( entity.GetHour(), entity.MWh));
+                                }
+
+                                query = String.Format( "SELECT crd.RECID " +                                         // Switch miss for duplicate
+                                                        "FROM consumption_audited cad LEFT OUTER JOIN consumption_audit ca ON ca.AID = cad.AID " +
+                                                        "WHERE crd.RECID = {0} " +
+                                                        "AND cr.MWH = -1 " + chkVal);
+
+                                command.CommandText = query;
+                                command.Prepare();
+                                var tmpObject = command.ExecuteScalar();
+                                int toDel;
+                                if(Int32.TryParse(tmpObject.ToString(), out toDel))
+                                {
+                                    query = "DELETE " +                                                  // Break audit connection
+                                              "FROM consumption_audited cad " +
+                                              "WHERE cad.AID = " + toDel + " ";
+                                    ExecuteNonQueryCommand(query, connection);
+
+                                    query = "DELETE " +                                                  // Delete audit record
+                                            "FROM consumption_audit ca " +
+                                            "WHERE ca.AID = " + toDel + " ";
+                                    ExecuteNonQueryCommand(query, connection);
+                                }
+
+                                if (sharedUpdate.DupsAndMisses.ContainsKey(entity.GID) &&
+                                    sharedUpdate.DupsAndMisses[entity.GID].Item2 != null &&
+                                    sharedUpdate.DupsAndMisses[entity.GID].Item2.Contains(entity.GetHour()))         // Remove timestamp miss from same session
+                                {
+                                    sharedUpdate.DupsAndMisses[entity.GID].Item2.Remove(entity.GetHour());
+                                }
+
+                            }    
+                        }
+                    }
+                    else               // First original after misses
+                    {
+                        cID = RandomPKGenerator("SELECT CID FROM CONSUMPTION ", connection);            // Insert it as original conusmption
+
 
                         query = String.Format("INSERT INTO CONSUMPTION (CID, MWH) " +                       // Make consumption record
-                                         "VALUES({0}, {1}) ", cID, entity.MWh);
+                                            "VALUES({0}, {1}) ", cID, entity.MWh);
                         ExecuteNonQueryCommand(query, connection);
 
                         query = String.Format("INSERT INTO CONSUMPTION_RECORDED(CID, RECID) " +             // Link them
-                                         "VALUES({0}, {1}) ", cID, recID);
-                         ExecuteNonQueryCommand(query, connection);
-                    }
-                }
-                                         
-                sharedUpdate.NewGeos.Add(entity.GID);                                               // Add new Geo. only if query passes; Has original? => Not new Geo.
-                if (entity.MWh == -1 && !sharedUpdate.DupsAndMisses[entity.GID].Item2.Contains(entity.GetHour()))                                                               //Is a miss
-                {
-                        sharedUpdate.DupsAndMisses[entity.GID].Item2.Add(entity.GetHour());         // Record it
-                }
+                                            "VALUES({0}, {1}) ", cID, recID);
+                        ExecuteNonQueryCommand(query, connection);
 
-                //Check if there is audit to delete
-                query = "SELECT cad.aid " +
-                "FROM ees ee LEFT OUTER JOIN consumption_audited cad ON cad.RECID = ee.RECID " +
-                "AND ee.recid = " + recID + " " +
-                "WHERE cad.aid IS NOT NULL ";
-
-                using (IDbConnection connection = ConnectionUtil_Pooling.GetConnection())
-                {
-                    connection.Open();
-                    using (IDbCommand command = connection.CreateCommand())
-                    {
-                        command.CommandText = query;
-                        command.Prepare();
-
-                        var res = command.ExecuteScalar();
-                        int toDel;
-                        if (res != null &&  Int32.TryParse(command.ExecuteScalar().ToString(), out toDel))      // GetCheck audits to delete
+                                
+                                
+                        // Check any audits to nullify (fisrst original after miss)
+                        query = "SELECT cad.aid " +
+                                "FROM ees ee LEFT OUTER JOIN consumption_audited cad ON cad.RECID = ee.RECID " +
+                                "AND ee.recid = " + recID + " " +
+                                "WHERE cad.aid IS NOT NULL ";
+                        using (IDbCommand command = connection.CreateCommand())
                         {
-                            query =  "DELETE " +                                                                // Break audit connection
-                                     "FROM consumption_audited cad " +
-                                     "WHERE cad.AID = " + toDel + " ";
-                            ExecuteNonQueryCommand(query, connection);
+                            command.CommandText = query;
+                            command.Prepare();
 
-                            query = "DELETE " +                                                                 // Delete audit record
-                                     "FROM consumption_audit ca " +
-                                     "WHERE ca.AID = " + toDel + " ";
-                            ExecuteNonQueryCommand(query, connection);
-                        }
-                    }
-                }
-
-            }
-            else // Has original, audit it (has original => Has its EES Record too)
-            {
-
-                //Find original in EES
-                int recId = FindEEsPK(entity);
-
-                //Already audited? (max. 1)
-                query = "SELECT ee.RECID " +
-                        "FROM consumption_audited cad, consumption_audit ca, ees ee " +
-                        "WHERE ee.RECID=cad.RECID " +
-                        "AND   cad.AID = ca.AID " +
-                        "AND   ca.DupVal = " + entity.MWh;
-
-                using (IDbConnection connection = ConnectionUtil_Pooling.GetConnection())
-                {
-                    connection.Open();
-                    using (IDbCommand command = connection.CreateCommand())
-                    {
-                        command.CommandText = query;
-                        command.Prepare();
-
-                        var res = command.ExecuteScalar();
-                        if (res!=null)                                   // Not audited
-                        {
-    
-                            int aID = RandomPKGenerator("SELECT AID FROM consumption_audit ", connection);
-
-                            query = "INSERT INTO CONSUMPTION_AUDIT (AID, DUPVAL)" +                     // Audit it
-                                    "VALUES (" + aID + "," + entity.MWh + ") ";
-                            ExecuteNonQueryCommand(query, connection);
-
-                            query = "INSERT INTO CONSUMPTION_AUDITED (AID, RECID) " +                    // Connect
-                                    "VALUES (" + aID + "," + recId + ") ";
-                            ExecuteNonQueryCommand(query, connection);
-
-                            //Logic: Identical duplicates
-                            var tmpTup = new Tuple<int, int>(entity.GetHour(), entity.MWh);
-                            if (!sharedUpdate.DupsAndMisses.ContainsKey(entity.GID))   // First
+                            using (IDataReader reader = command.ExecuteReader())
                             {
-                                // First duplicate or miss for that country
-                                sharedUpdate.DupsAndMisses[entity.GID] =
-                                    new Tuple<List<Tuple<int, int>>, List<int>>(new List<Tuple<int, int>>(), new List<int>(24));
-                            }
-                            else if (!sharedUpdate.DupsAndMisses[entity.GID].Item1.Contains(tmpTup)) // Not the first one, not recorded
-                            {
-                                sharedUpdate.DupsAndMisses[entity.GID].Item1.Add(tmpTup);
+                                int toDel;
+                                while (reader.Read())
+                                {
+                                    toDel = reader.GetInt32(0);
+                                    query = "DELETE " +                                                  // Break audit connection
+                                            "FROM consumption_audited cad " +
+                                            "WHERE cad.AID = " + toDel + " ";
+                                    ExecuteNonQueryCommand(query, connection);
+
+                                    query = "DELETE " +                                                  // Delete audit record
+                                            "FROM consumption_audit ca " +
+                                            "WHERE ca.AID = " + toDel + " ";
+                                    ExecuteNonQueryCommand(query, connection);
+                                }
                             }
                         }
 
+                        if (sharedUpdate.DupsAndMisses.ContainsKey(entity.GID) &&
+                            sharedUpdate.DupsAndMisses[entity.GID].Item2 != null &&
+                            sharedUpdate.DupsAndMisses[entity.GID].Item2.Contains(entity.GetHour()))         // Remove timestamp miss from same session
+                        {
+                            sharedUpdate.DupsAndMisses[entity.GID].Item2.Remove(entity.GetHour());
+                        }
+
                     }
+                              
                 }
+
             }
+        }
+            
     }
 
     public void SaveAll(IEnumerable<ConsumptionRecord> entities)                         
@@ -692,153 +790,253 @@ public class ConsumptionDAOImpl : IConsumptionDAO
         //foreach(var elem in entities)     //Slower, more connection establishing but compact solution
         //{
         //    Save(elem);
-        //}
-
+        //} 
+       
         sharedUpdate = new ConsumptionUpdate();
+        string query = "";
+        int recID, cID, aID, chkVal;
+
         using (IDbConnection connection = ConnectionUtil_Pooling.GetConnection())
         {
             connection.Open();
             foreach (var entity in entities)
-            {
-
-
-                string query = "";
-
-                if (!CommonImpl.ContainsPK(entity.GID, ETableType.Geography))                               // Geo known?
+            {   
+                if (!CommonImpl.ContainsPK(entity.GID, ETableType.Geography, connection))                                   // Geo known?
                 {
-                    query = String.Format("INSERT INTO GEOGRAPHY_SUBSYSTEM(GID, GNAME) " +                  // Insert into geo. table
-                                 "VALUES('{0}','{1}') ", entity.GID, entity.GID);
+                    query = String.Format("INSERT INTO GEOGRAPHY_SUBSYSTEM(GID, GNAME) " +                      // Insert into geo. table
+                                    "VALUES('{0}','{1}') ", entity.GID, entity.GID);
                     ExecuteNonQueryCommand(query, connection);
+
+                    sharedUpdate.NewGeos.Add(entity.GID);                                                       // Add new Geo. 
                 }
 
-                int recID;
-                if (FindByCountryAndDate(entity.GID, entity.TimeStamp).Count == 0)                          //No original, insert 
+                
+                recID = FindEEsPK(entity, connection);
+                if (recID == -1)                                                                                  // Is a first miss or first consumptipn
                 {
-                    recID = RandomPKGenerator("SELECT RECID FROM EES ", connection);
+                    recID = RandomPKGenerator("SELECT RECID FROM EES ", connection);                            // Insert EES (coomon for consumption & audit)
+                    query = String.Format("INSERT INTO EES (RECID, TIME_STAMP, GID) " +
+                    "VALUES({0},'{1}', '{2}') ", recID, entity.TimeStamp, entity.GID);
+                    ExecuteNonQueryCommand(query, connection);
 
-
-                    if(entity.MWh==-1)  // Is a miss, record it in audit with value -1
+                    if (entity.MWh == -1)  // First audit (miss)
                     {
-                        int aID = RandomPKGenerator("SELECT AID FROM CONSUMPTION_AUDIT ", connection);
-                        query = String.Format("INSERT INTO EES (RECID, TIME_STAMP, GID) " +                 // Make EES record      
-                                        "VALUES({0}, '{1}', '{2}') ", recID, entity.TimeStamp, entity.GID);
+                        aID = RandomPKGenerator("SELECT AID FROM CONSUMPTION_AUDIT ", connection);
+                        query = String.Format("INSERT INTO CONSUMPTION_AUDIT (AID, DUPVAL) " +                  // Make audit record
+                                            "VALUES({0}, {1}) ", aID, entity.MWh);
                         ExecuteNonQueryCommand(query, connection);
 
+                        query = String.Format("INSERT INTO CONSUMPTION_AUDITED(AID, RECID) " +                  // Link them
+                                            "VALUES({0}, {1}) ", aID, recID);
+                        ExecuteNonQueryCommand(query, connection);
+                        if (!sharedUpdate.DupsAndMisses.ContainsKey(entity.GID))
+                        {
+                            sharedUpdate.DupsAndMisses.Add(entity.GID,
+                                new Tuple<List<Tuple<int, int>>, List<int>>(new List<Tuple<int, int>>(), new List<int>()));
+                        }
 
-                        query = String.Format("INSERT INTO CONSUMPTION_AUDIT (AID, DUPVAL) " +              // Make audit record
-                                         "VALUES({0}, {1}) ", aID, entity.MWh);
+                        sharedUpdate.DupsAndMisses[entity.GID].Item2.Add(entity.GetHour());
+                    }
+                    else                // First consumption
+                    {
+                        cID = RandomPKGenerator("SELECT CID FROM CONSUMPTION ", connection);
+                        query = String.Format("INSERT INTO CONSUMPTION (CID, MWH) " +                       // Make consumption record
+                                            "VALUES({0}, {1}) ", cID, entity.MWh);
                         ExecuteNonQueryCommand(query, connection);
 
-                        query = String.Format("INSERT INTO CONSUMPTION_AUDITED(AID, RECID) " +              // Link them
-                                         "VALUES({0}, {1}) ", aID, recID);
+                        query = String.Format("INSERT INTO CONSUMPTION_RECORDED(CID, RECID) " +             // Link them
+                                            "VALUES({0}, {1}) ", cID, recID);
                         ExecuteNonQueryCommand(query, connection);
                     }
-                    else               // Cannot be duplicate (handled by if statement), insert as original
-                    {
-                        int cID = RandomPKGenerator("SELECT CID FROM CONSUMPTION ", connection);
-                        query += String.Format("INSERT INTO EES (RECID, TIME_STAMP, GID) " +                 // Make EES record      
-                                     "VALUES({0}, '{1}', '{2}') ", recID, entity.TimeStamp, entity.GID);
-                        ExecuteNonQueryCommand(query, connection);
+                }
+                else // Has audits or consumptions
+                {
 
-
-                        query += String.Format("INSERT INTO CONSUMPTION (CID, MWH) " +                       // Make consumption record
-                                         "VALUES({0}, {1}) ", cID, entity.MWh);
-                        ExecuteNonQueryCommand(query, connection);
-
-                        query += String.Format("INSERT INTO CONSUMPTION_RECORDED(CID, RECID) " +             // Link them
-                                         "VALUES({0}, {1}) ", cID, recID);
-                        ExecuteNonQueryCommand(query, connection);
-                    }                                                                                         
-                                      
-                    sharedUpdate.NewGeos.Add(entity.GID);                                               // Add new Geo. only if query passes; Has original? => Not new Geo.
-                    if (entity.MWh == -1 && !sharedUpdate.DupsAndMisses[entity.GID].Item2.Contains(entity.GetHour()))                                                               //Is a miss
-                    {                                                                                   
-                        sharedUpdate.DupsAndMisses[entity.GID].Item2.Add(entity.GetHour());         // Record it
-                    }
-                        
-                    //Check if there is audit to delete
-                    query = "SELECT cad.aid " +
-                    "FROM ees ee LEFT OUTER JOIN consumption_audited cad ON cad.RECID = ee.RECID " +
-                    "AND ee.recid = " + recID + " " +
-                    "WHERE cad.aid IS NOT NULL ";
+                    query = String.Format("SELECT car.RECID " +                                     //Check has original consumption 
+                               "FROM consumption_recorded car LEFT OUTER JOIN ees ee " +
+                               "ON car.RECID = ee.RECID LEFT OUTER JOIN consumption cac " +
+                               "ON cac.CID = car.CID " +
+                               "WHERE car.RECID = {0} ", recID);
 
                     using (IDbCommand command = connection.CreateCommand())
                     {
                         command.CommandText = query;
                         command.Prepare();
-
-                        var res = command.ExecuteScalar();
-                        int toDel;
-                        if (res != null && Int32.TryParse(command.ExecuteScalar().ToString(), out toDel))      // GetCheck audits to delete
-                        {
-                            query = "DELETE" +                                                  // Break audit connection
-                                     "FROM consumption_audited cad " +
-                                     "WHERE cad.AID = " + toDel + " ";
-                            ExecuteNonQueryCommand(query, connection);
-
-                            query = "DELETE" +                                                  // Delete audit record
-                                     "FROM consumption_audit ca " +
-                                     "WHERE ca.AID = " + toDel + " ";
-                            ExecuteNonQueryCommand(query, connection);
-                        }
+                        var tmpObj = command.ExecuteScalar();
+                        if (tmpObj == null) chkVal = -1;
+                        else if (!Int32.TryParse(tmpObj.ToString(), out chkVal)) chkVal = -1;
                     }
 
-                }
-                else // Has original, audit it (has original => Has its EES Record to)
-                {
-
-                    //Find original in EES
-                    int recId = FindEEsPK(entity);
-
-                    //Already audited? (max. 1)
-                    query = "SELECT ee.RECID " +
-                            "FROM consumption_audited cad, consumption_audit ca, ees ee " +
-                            "WHERE ee.RECID=cad.RECID " +
-                            "AND   cad.AID = ca.AID " +
-                            "AND   ca.DupVal = " + entity.MWh +" ";
-
-                    using (IDbCommand command = connection.CreateCommand())
+                    if (entity.MWh == -1)  // Is a miss
                     {
-                        command.CommandText = query;
-                        command.Prepare();
 
-                        var res = command.ExecuteScalar();
-                        if (res != null)                                   // Not audited
+                        if (chkVal == -1)     // And has no original consumption
                         {
-                            int aID = RandomPKGenerator("SELECT AID FROM consumption_audit ", connection);
+                            query = "SELECT count(*) " +
+                                    "FROM consumption_audited cad LEFT OUTER JOIN ees ee " +
+                                    "ON cad.RECID = ee.RECID LEFT OUTER JOIN consumption_audit ca " +
+                                    "ON ca.AID = cad.AID " +
+                                    "WHERE cad.RECID =  " + recID+" "+
+                                    "AND ca.DUPVAL =  " + entity.MWh +" ";
 
-                            query = "INSERT INTO CONSUMPTION_AUDIT (AID, DUPVAL) " +                     // Audit it
-                                    "VALUES (" + aID + "," + entity.MWh + ") ";
-                            ExecuteNonQueryCommand(query, connection);
-
-                            query = "INSERT INTO CONSUMPTION_AUDITED (AID, RECID) " +                    // Connect
-                                    "VALUES (" + aID + "," + recId + ") ";
-                            ExecuteNonQueryCommand(query, connection);
-
-                            //Logic: Identical duplicates
-                            var tmpTup = new Tuple<int, int>(entity.GetHour(), entity.MWh);
-                            if (!sharedUpdate.DupsAndMisses.ContainsKey(entity.GID))   // First
+                            using (IDbCommand command = connection.CreateCommand())
                             {
-                                // First duplicate or miss for that country
-                                sharedUpdate.DupsAndMisses[entity.GID] =
-                                    new Tuple<List<Tuple<int, int>>, List<int>>(new List<Tuple<int, int>>(), new List<int>(24));
-                            }
-                            else if (!sharedUpdate.DupsAndMisses[entity.GID].Item1.Contains(tmpTup)) // Not the first one, not recorded
-                            {
-                                sharedUpdate.DupsAndMisses[entity.GID].Item1.Add(tmpTup);
+                                command.CommandText = query;
+                                command.Prepare();
+
+                                if (Int32.Parse(command.ExecuteScalar().ToString()) == 0)   // Not the exact one
+                                {
+
+                                    aID = RandomPKGenerator("SELECT AID FROM CONSUMPTION_AUDIT ", connection);
+                                    query = String.Format("INSERT INTO CONSUMPTION_AUDIT (AID, DUPVAL) " +              // Make audit record
+                                                        "VALUES({0}, {1}) ", aID, entity.MWh);
+                                    ExecuteNonQueryCommand(query, connection);
+
+                                    query = String.Format("INSERT INTO CONSUMPTION_AUDITED(AID, RECID) " +              // Link them
+                                                        "VALUES({0}, {1}) ", aID, recID);
+                                    ExecuteNonQueryCommand(query, connection);
+
+                                    if (!sharedUpdate.DupsAndMisses.ContainsKey(entity.GID))
+                                    {
+                                        sharedUpdate.DupsAndMisses.Add(entity.GID,
+                                            new Tuple<List<Tuple<int, int>>, List<int>>(new List<Tuple<int, int>>(), new List<int>()));
+                                    }
+                                    sharedUpdate.DupsAndMisses[entity.GID].Item2.Add(entity.GetHour());
+                                }
+
+
                             }
                         }
-                        
+                        //Miss and has original value => Ignore
                     }
+                    else                   // Duplicate or original after misses
+                    {
+
+
+                        if (chkVal != -1)   // Original exists
+                        {
+                            query = "SELECT count(*) " +
+                                    "FROM consumption_recorded crd LEFT OUTER JOIN consumption cr ON crd.CID = cr.CID " +
+                                    "WHERE crd.RECID = " + chkVal +" "+
+                                    "AND cr.MWH = " + entity.MWh;
+                            using (IDbCommand command = connection.CreateCommand())
+                            {
+                                command.CommandText = query;
+                                command.Prepare();
+
+                                if (Int32.Parse(command.ExecuteScalar().ToString()) == 0)                  // Duplicate (not same MWH)
+                                {
+                                    aID = RandomPKGenerator("SELECT AID FROM CONSUMPTION_AUDIT ", connection);
+
+                                    query = String.Format("INSERT INTO CONSUMPTION_AUDIT (AID, DUPVAL) " +              // Make audit record
+                                                        "VALUES({0}, {1}) ", aID, entity.MWh);
+                                    ExecuteNonQueryCommand(query, connection);
+
+                                    query = String.Format("INSERT INTO CONSUMPTION_AUDITED(AID, RECID) " +              // Link them
+                                                        "VALUES({0}, {1}) ", aID, recID);
+                                    ExecuteNonQueryCommand(query, connection);
+
+
+                                    if (sharedUpdate.DupsAndMisses.ContainsKey(entity.GID) &&
+                                        sharedUpdate.DupsAndMisses[entity.GID].Item2 != null &&
+                                        !sharedUpdate.DupsAndMisses[entity.GID].Item2.Contains(entity.GetHour()))        // Not first
+                                    {
+                                        sharedUpdate.DupsAndMisses[entity.GID].Item1.Add(new Tuple<int, int>(entity.GetHour(), entity.MWh));
+                                    }
+
+                                    query = "SELECT cad.RECID " +                                         // Switch miss for duplicate
+                                            "FROM consumption_audited cad LEFT OUTER JOIN consumption_audit ca ON ca.AID = cad.AID " +
+                                            "WHERE cad.RECID = " + chkVal+" "+
+                                            "AND ca.DUPVAL = -1 ";
+
+                                    command.CommandText = query;
+                                    command.Prepare();
+                                    var tmpObject = command.ExecuteScalar();
+                                    int toDel;
+                                    if (tmpObject!=null && Int32.TryParse(tmpObject.ToString(), out toDel))
+                                    {
+                                        query = "DELETE " +                                                  // Break audit connection
+                                                  "FROM consumption_audited cad " +
+                                                  "WHERE cad.AID = " + toDel + " ";
+                                        ExecuteNonQueryCommand(query, connection);
+
+                                        query = "DELETE " +                                                  // Delete audit record
+                                                "FROM consumption_audit ca " +
+                                                "WHERE ca.AID = " + toDel + " ";
+                                        ExecuteNonQueryCommand(query, connection);
+                                    }
+
+                                    if (sharedUpdate.DupsAndMisses.ContainsKey(entity.GID) &&
+                                        sharedUpdate.DupsAndMisses[entity.GID].Item2 != null &&
+                                        sharedUpdate.DupsAndMisses[entity.GID].Item2.Contains(entity.GetHour()))         // Remove timestamp miss from same session
+                                    {
+                                        sharedUpdate.DupsAndMisses[entity.GID].Item2.Remove(entity.GetHour());
+                                    }
+
+                                }
+                            }
+                        }
+                        else               // First original after misses
+                        {
+                            cID = RandomPKGenerator("SELECT CID FROM CONSUMPTION ", connection);            // Insert it as original conusmption
+
+
+                            query = String.Format("INSERT INTO CONSUMPTION (CID, MWH) " +                       // Make consumption record
+                                                "VALUES({0}, {1}) ", cID, entity.MWh);
+                            ExecuteNonQueryCommand(query, connection);
+
+                            query = String.Format("INSERT INTO CONSUMPTION_RECORDED(CID, RECID) " +             // Link them
+                                                "VALUES({0}, {1}) ", cID, recID);
+                            ExecuteNonQueryCommand(query, connection);
+
+
+
+                            // Check any audits to nullify (fisrst original after miss)
+                            query = "SELECT cad.aid " +
+                                    "FROM ees ee LEFT OUTER JOIN consumption_audited cad ON cad.RECID = ee.RECID " +
+                                    "AND ee.recid = " + recID + " " +
+                                    "WHERE cad.aid IS NOT NULL ";
+                            using (IDbCommand command = connection.CreateCommand())
+                            {
+                                command.CommandText = query;
+                                command.Prepare();
+
+                                using (IDataReader reader = command.ExecuteReader())
+                                {
+                                    int toDel;
+                                    while (reader.Read())
+                                    {
+                                        toDel = reader.GetInt32(0);
+                                        query = "DELETE " +                                                  // Break audit connection
+                                                "FROM consumption_audited cad " +
+                                                "WHERE cad.AID = " + toDel + " ";
+                                        ExecuteNonQueryCommand(query, connection);
+
+                                        query = "DELETE " +                                                  // Delete audit record
+                                                "FROM consumption_audit ca " +
+                                                "WHERE ca.AID = " + toDel + " ";
+                                        ExecuteNonQueryCommand(query, connection);
+                                    }
+                                }
+                            }
+
+                            if (sharedUpdate.DupsAndMisses.ContainsKey(entity.GID) &&
+                                sharedUpdate.DupsAndMisses[entity.GID].Item2 != null &&
+                                sharedUpdate.DupsAndMisses[entity.GID].Item2.Contains(entity.GetHour()))         // Remove timestamp miss from same session
+                            {
+                                sharedUpdate.DupsAndMisses[entity.GID].Item2.Remove(entity.GetHour());
+                            }
+
+                        }
+
+                    }
+
                 }
             }
         }
+
     }
 
-    /*
-            SELECT ee.RECID, crd.CID, cad.AID
-            FROM ees ee LEFT OUTER JOIN consumption_recorded crd ON ee.recid=crd.recid LEFT OUTER JOIN consumption_audited cad ON cad.RECID = ee.RECID;
-     */
     public ConsumptionUpdate StoreConsumption(List<ConsumptionRecord> consumptionRecords)
     {
         SaveAll(consumptionRecords);

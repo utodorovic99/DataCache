@@ -30,18 +30,60 @@ namespace UIEmulator
             ui.InitDataLoad();
             string fileName = "ostv_2018_05_07.xml";
             string fileLoadPath = Path.GetFullPath(fileName);   // Emulating client path delivery
-            Trace.WriteLine("Writing: {0}", fileName);
-            var loadReult = ui.InitFileLoad(fileLoadPath, ELoadDataType.Consumption);
+            ParseDBWriteResult(ui.InitFileLoad(fileLoadPath, ELoadDataType.Consumption));
 
-            //With Dups and Misses
             fileName = "ostv_2018_05_08.xml";
-            fileLoadPath = Path.GetFullPath(fileName);   
-            Trace.WriteLine("Writing: {0}", fileName);
-            loadReult = ui.InitFileLoad(fileLoadPath, ELoadDataType.Consumption);
-
+            fileLoadPath = Path.GetFullPath(fileName);          // Emulating client path delivery
+            ParseDBWriteResult(ui.InitFileLoad(fileLoadPath, ELoadDataType.Consumption));
 
             Console.ReadKey(true);
         }
+
+        private static void ParseDBWriteResult( EFileLoadStatus status)
+        {
+            switch (status)
+            {
+                case EFileLoadStatus.DBWriteFailed:
+                    {
+                        break;
+                    }
+                case EFileLoadStatus.Failed:
+                    {
+                        break;
+                    }
+                case EFileLoadStatus.FileTypeNotSupported:
+                    {
+                        Console.WriteLine("FAIL: Only 'ostv' data type supported");
+                        break;
+                    }
+                case EFileLoadStatus.InvalidFileExtension:
+                    {
+                        Console.WriteLine("FAIL: Only '.xml' document type supported ");
+                        break;
+                    }
+                case EFileLoadStatus.InvalidFileStructure:
+                    {
+                        Console.WriteLine("FAIL: All records have wrong structure");
+                        break;
+                    }
+                case EFileLoadStatus.OpeningFailed:
+                    {
+                        Console.WriteLine("FAIL: Selected file is used by another process");
+                        break;
+                    }
+                case EFileLoadStatus.PartialReadSuccess:
+                    {
+                        Console.WriteLine("REPORT: Corrupted element structure records found, others written successfully");
+                        break;
+                    }
+                case EFileLoadStatus.Success:
+                    {
+                        Console.WriteLine("REPORT: All elements written successfully");
+                        break;
+                    }
+            }
+        }
+
     }
 
 }

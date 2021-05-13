@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.IO;
 using Common_Project.Classes;
+using CacheControler_Project.Enums;
 
 namespace CacheControler_Project.Services
 {
@@ -19,6 +20,6 @@ namespace CacheControler_Project.Services
 
         /// 
         /// <param name="dSpanGeoReq"></param>
-        int DSpanGeoConsumptionRead(DSpanGeoReq dSpanGeoReq);
+        Tuple<EConcumptionReadStatus, List<ConsumptionRecord>> DSpanGeoConsumptionRead(DSpanGeoReq dSpanGeoReq);
     }//end IConsumptionRead
 }
