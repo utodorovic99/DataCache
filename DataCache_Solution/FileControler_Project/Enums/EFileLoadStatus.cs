@@ -23,6 +23,7 @@ namespace FileControler_Project.Enums
         OpeningFailed,
         DBWriteFailed,
         Failed,
-        InvalidFileExtension
+        InvalidFileExtension,
+        InvalidDateTime
     }
 }

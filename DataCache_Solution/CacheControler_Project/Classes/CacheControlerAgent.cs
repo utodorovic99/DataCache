@@ -24,9 +24,9 @@ namespace CacheControler_Project.Classes
             return connectionControler.ConsumptionReqPropagate(dSpanGeoReq);
         }
 
-        public EUpdateGeoStatus GeoEntityUpdate(string oldID, string newID)
+        public EUpdateGeoStatus GeoEntityUpdate(string oldName, string newName)
         {
-            return connectionControler.GeoEntityUpdate(oldID, newID);
+            return connectionControler.GeoEntityUpdate(oldName, newName);
         }
 
         public bool GeoEntityWrite(GeoRecord gRecord)
@@ -39,9 +39,9 @@ namespace CacheControler_Project.Classes
             return connectionControler.ReadAuditContnet();
         }
 
-        public List<GeoRecord> ReadGeoContent()
+        public Dictionary<string, string> ReadGeoContent()
         {
-            return ReadGeoContent();
+            return connectionControler.ReadGeoContent();
         }
     }
 }

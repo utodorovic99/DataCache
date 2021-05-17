@@ -105,23 +105,17 @@ namespace FileControler_Project.Classes
         /// <param name="consumptionRecord"></param>
         private Tuple<EFileLoadStatus, ConsumptionUpdate> InitDBConsumptionWrite(List<ConsumptionRecord> consumptionRecord)
         {
-            ConsumptionUpdate update;
-            //try
-            //{
-
-                update = m_ConnectionControler.OstvConsumptionDBWrite(consumptionRecord);
-                
-                //////////////////////////////////////////////////////////////////////////////////////////////
-                // For testing purposes, remove after distributed DB implementation and use commented above //
-                // update = GenerateConsumptionUpdate(consumptionRecord); // Mocking distributed DB response//
-                //////////////////////////////////////////////////////////////////////////////////////////////
-
+            try
+            {
+                ConsumptionUpdate update = m_ConnectionControler.OstvConsumptionDBWrite(consumptionRecord);
                 return new Tuple<EFileLoadStatus, ConsumptionUpdate>(EFileLoadStatus.Success, update);
-            //}
-            //catch
-            //{
-                return new Tuple<EFileLoadStatus, ConsumptionUpdate>(EFileLoadStatus.Success, null);    // Risky
-            //}
+            }
+            catch
+            {
+                return new Tuple<EFileLoadStatus, ConsumptionUpdate>(EFileLoadStatus.DBWriteFailed,  new ConsumptionUpdate());    // Risky
+            }
+            
+       
         }
 
         /// 
@@ -179,12 +173,13 @@ namespace FileControler_Project.Classes
         /// 
         /// <param name="path"></param>
         /// <param name="dataType"></param>
-        public Tuple<EFileLoadStatus, ConsumptionUpdate> LoadFileStoreDB(string path, ELoadDataType dataType)
+        public Tuple<string, Tuple<EFileLoadStatus, ConsumptionUpdate>> LoadFileStoreDB(string path, ELoadDataType dataType)
         {
 
             FileInfo fileInfo = new FileInfo(path);
             char[] splitWordsBy = "_.".ToArray();
             string[] splitParts = fileInfo.Name.Split(splitWordsBy, StringSplitOptions.RemoveEmptyEntries);
+            string timeStampBase = splitParts[1]+"-"+splitParts[2]+"-"+splitParts[3];
 
             if (supportedTypes.ContainsKey(splitParts[0]) &&
                 supportedTypes[splitParts[0]] == dataType &&                // Is valid data type? (ostv)
@@ -195,7 +190,8 @@ namespace FileControler_Project.Classes
                     //Place to add new supported types in future
                     case ELoadDataType.Consumption:
                         {
-                            return LoadOstvConsumptionStoreDB(fileInfo);
+                            return new Tuple<string, Tuple<EFileLoadStatus, ConsumptionUpdate>>
+                                (timeStampBase, LoadOstvConsumptionStoreDB(fileInfo));
                         }
                     default:
                         {
@@ -204,7 +200,9 @@ namespace FileControler_Project.Classes
                 }
             }
 
-            return new Tuple<EFileLoadStatus, ConsumptionUpdate>(EFileLoadStatus.FileTypeNotSupported, new ConsumptionUpdate());// Avoiding null as retVal
+            return new Tuple<string, Tuple<EFileLoadStatus, ConsumptionUpdate>>
+                (timeStampBase, new Tuple<EFileLoadStatus, ConsumptionUpdate>
+                (EFileLoadStatus.FileTypeNotSupported, new ConsumptionUpdate()));// Avoiding null as retVal
         }
 
     }//end FileControler

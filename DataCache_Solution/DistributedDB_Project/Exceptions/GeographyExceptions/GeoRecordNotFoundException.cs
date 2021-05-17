@@ -10,7 +10,7 @@ namespace DistributedDB_Project.Exceptions.GeographyExceptions
     public class GeoRecordNotFoundException : DBObjectNotFoundException
     {
         private string message;
-        private string missID;
+        private string missCriteria;
         private string details;
 
         public GeoRecordNotFoundException(string message, string missID, string details)
@@ -20,7 +20,7 @@ namespace DistributedDB_Project.Exceptions.GeographyExceptions
             this.details = details;
         }
 
-        public string MissID { get => missID; set => missID = value; }
+        public string MissID { get => missCriteria; set => missCriteria = value; }
         public string Details { get => details; set => details = value; }
     }
 }

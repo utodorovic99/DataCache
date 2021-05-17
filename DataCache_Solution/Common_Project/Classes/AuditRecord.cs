@@ -13,6 +13,7 @@ using System.IO;
 
 namespace Common_Project.Classes
 {
+    [Serializable]
     public class AuditRecord
     {
 
@@ -75,7 +76,7 @@ namespace Common_Project.Classes
 
         public override string ToString()
         {
-            string outStr = String.Format("Audit record GID: {0}\tTimeStamp: {1}\tType: ",gID, timeStamp);
+            string outStr = String.Format("Audit record GID: {0}\tTimeStamp: {1} \tType: ",gID, timeStamp);
             if(DupVal==-1)
             { outStr += "Miss"; }
             else

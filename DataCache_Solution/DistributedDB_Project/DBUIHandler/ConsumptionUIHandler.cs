@@ -315,46 +315,32 @@ namespace DistributedDB_Project.DistributedCallHandler
             Console.Write("Enter Timestamp (Format: Year-Month-Day): ");
             string timeStamp = Console.ReadLine();
 
-            try
-            {
-                consumptionService.HandleDeleteByContent(new ConsumptionRecord(gID, mWh, timeStamp));
+
+            if (consumptionService.HandleDeleteByContent(new ConsumptionRecord(gID, mWh, timeStamp)))
                 Console.WriteLine("\t\t<< DELETE OPERATION SUCCEED >>");
-                ShowAll();
-            }
-            catch(ConsumptionNotFoundException exc)
-            {
-                Console.WriteLine("\t\t<< DELETE OPERATION FAILED >>\nError:{0}", exc.Message);
-            }
+            else
+                Console.WriteLine("\t\t<< DELETE OPERATION FAILED >>\nError: Element not found");
+            ShowAll();
         }
         private void DeleteByCID()
         {
             Console.Write("Enter CID: ");
             string cID = Console.ReadLine();
 
-            try
-            {
-                consumptionService.HandleDeleteByCID(cID);
+            if(consumptionService.HandleDeleteByCID(cID))
                 Console.WriteLine("\t\t<< DELETE OPERATION SUCCEED >>");
-                ShowAll();
-            }
-            catch (ConsumptionNotFoundException exc)
-            {
-                Console.WriteLine("\t\t<< DELETE OPERATION FAILED >>\nError:{0}", exc.Message);
-            }
+            else
+                Console.WriteLine("\t\t<< DELETE OPERATION FAILED >>\nError: Element not found");
+            ShowAll();
         }
 
         private void DeleteAll()
         {
-            try
-            {
-                consumptionService.HandleDeleteAll();
-                Console.WriteLine("\t\t<< DELETE OPERATION SUCCEED >>");
-                ShowAll();
-            }
-            catch (ConsumptionNotFoundException exc)
-            {
-                Console.WriteLine("\t\t<< DELETE OPERATION FAILED >>\nError:{0}", exc.Message);
-            }
+            Console.WriteLine("<< STATE BEFORE >>");
+            ShowAll();
+            consumptionService.HandleDeleteAll();
+            Console.WriteLine("<< STATE AFTER >>");
+            ShowAll();
         }
     }
 }

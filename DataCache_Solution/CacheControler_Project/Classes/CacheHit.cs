@@ -18,12 +18,12 @@ namespace CacheControler_Project.Classes
     {
 
         private List<ConsumptionRecord> cRecord;
-        private int hitRate;
         private DateTime hitTime;
 
-        public CacheHit()
+        public CacheHit(List<ConsumptionRecord> cRecord)
         {
-
+            this.cRecord = cRecord;
+            hitTime = DateTime.Now;
         }
 
         ~CacheHit()
@@ -40,18 +40,6 @@ namespace CacheControler_Project.Classes
             set
             {
                 cRecord = value;
-            }
-        }
-
-        public int HitRate
-        {
-            get
-            {
-                return hitRate;
-            }
-            set
-            {
-                hitRate = value;
             }
         }
 

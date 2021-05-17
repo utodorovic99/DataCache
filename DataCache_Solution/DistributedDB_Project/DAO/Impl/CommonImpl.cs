@@ -19,7 +19,7 @@ namespace DistributedDB_Project.DAO.Impl
     internal class CommonImpl
     {
 
-        public static string FormatComplexArgument(IEnumerable<string> argList)
+        internal static string FormatComplexArgument(IEnumerable<string> argList)
         {
             string outStr = "(";
             foreach (var arg in argList)
@@ -29,7 +29,7 @@ namespace DistributedDB_Project.DAO.Impl
             return outStr.TrimEnd(',') + ")";
         }
 
-        public static string FormatComplexVarCharArgument(IEnumerable<string> argList)
+        internal static string FormatComplexVarCharArgument(IEnumerable<string> argList)
         {
             string outStr = "(";
             foreach (var arg in argList)

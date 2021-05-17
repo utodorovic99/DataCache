@@ -46,7 +46,7 @@ namespace DistributedDB_Project.DistributedDBCallHandler
             return auditService.HandleShowAll();
         }
 
-        public List<GeoRecord> ReadGeoContent()
+        public Dictionary<string, string> ReadGeoContent()
         {
             return geographyService.HandleShowAll();
         }

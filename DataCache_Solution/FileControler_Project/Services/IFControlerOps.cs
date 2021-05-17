@@ -24,9 +24,10 @@ namespace FileControler_Project.Services
     public interface IFControlerOps
 	{
 
-		/// 
-		/// <param name="path"></param>
-		/// <param name="dataType"></param>
-		Tuple<EFileLoadStatus, ConsumptionUpdate> LoadFileStoreDB(string path, ELoadDataType dataType);
-	}//end IFControlerOps
+        /// 
+        /// <param name="path"></param>
+        /// <param name="dataType"></param>
+        Tuple<string, Tuple<EFileLoadStatus, ConsumptionUpdate>> LoadFileStoreDB(string path, ELoadDataType dataType);
+
+    }//end IFControlerOps
 }

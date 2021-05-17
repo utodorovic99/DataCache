@@ -98,7 +98,7 @@ namespace ConnectionControler_Project.Classes
             return false;
         }
 
-        public List<GeoRecord> ReadGeoContent()
+        public Dictionary<string, string> ReadGeoContent()
         {
             try
             {
@@ -108,7 +108,7 @@ namespace ConnectionControler_Project.Classes
             {
                 Trace.WriteLine(e.ToString());  // Later throw custom exception or catch on other component
             }
-            return new List<GeoRecord>();
+            return new Dictionary<string, string>();
         }
     }//end ConnectionControler
 }

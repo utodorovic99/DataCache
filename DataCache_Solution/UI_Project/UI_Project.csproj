@@ -41,7 +41,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Classes\InitData.cs" />
     <Compile Include="Classes\UI.cs" />
     <Compile Include="ClientServices\UIOps.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

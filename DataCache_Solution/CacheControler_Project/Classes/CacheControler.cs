@@ -15,28 +15,66 @@ using CacheControler_Project.Services;
 using Common_Project.Classes;
 using ConnectionControler_Project.Classes;
 using Common_Project.DistributedServices;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace CacheControler_Project.Classes
 {
     public class CacheControler : IConsumptionRead
     {
-
-        private List<AuditRecord> cachedAudit;
-        private Dictionary<DSpanGeoReq, CacheHit> cachedConsumption;
-        private Dictionary<string, string> cachedGeo;
-        /// <summary>
-        /// // Sleep period in milliseconds
-        /// </summary>
-        private int cacheValidPeriod;
-        private int maxAudit;
-        private int maxConsumptionRecords;
-        private int maxGeo;
-        private int usedConsumptionRecords;
         public CacheControlerAgent m_ConnectionControler;
+
+        private Dictionary<DSpanGeoReq, CacheHit> cachedConsumption;
+        private List<AuditRecord> cachedAudit;
+        private Dictionary<string, string> cachedGeo;
+
+        private readonly object cacheLock = new object();
+        private List<DSpanGeoReq> orderedCacheOverlayKeys;  //For free space strategy, both lists are alliegned
+        private List<int> orderedCacheOverlayHits;
+        private readonly int cacheValidPeriod;
+        private readonly int garbageCollectorInterval;
+        private DateTime futureCheckpoint;
+
+        private readonly int maxAudit;
+        private readonly int maxConsumptionRecords;
+        private readonly int maxGeo;
+        private int freeConsumptionRecords;
+        private int freeAuditRecords;
+        private int freeGeoRecords;
 
         public CacheControler()
         {
+            cacheValidPeriod = 3;               //In hours
+            garbageCollectorInterval = 60000;
+            maxAudit = 200;                     // Max. 200 audit records
+            maxConsumptionRecords = 288;        // Max. 1 year dataspan (wont proceed further from UI if it's greater)
+            maxGeo = 200;
+            freeConsumptionRecords = maxConsumptionRecords;
+            futureCheckpoint = DateTime.Now.AddHours(cacheValidPeriod);
             m_ConnectionControler = new CacheControlerAgent();
+            
+            var retAudit = m_ConnectionControler.ReadAuditContnet();
+            if (retAudit.Count > maxAudit)
+            {
+                //custom throw
+            }
+            else cachedAudit = retAudit;
+
+            var retGeo = m_ConnectionControler.ReadGeoContent(); ;
+            if (retGeo.Count > maxGeo)
+            {
+                //custom throw
+            }
+            else cachedGeo = retGeo;
+
+            freeAuditRecords = maxAudit - cachedAudit.Count;
+            freeGeoRecords = maxGeo - cachedGeo.Count;
+
+            cachedConsumption = new Dictionary<DSpanGeoReq, CacheHit>();    // Initially without consumption
+            orderedCacheOverlayKeys = new List<DSpanGeoReq>();              // For delete strategy
+            orderedCacheOverlayHits = new List<int>();
+
+            Task.Run(() => CacheGarbageCollector());                        // Start background Grabage collector task
         }
 
         ~CacheControler()
@@ -44,123 +82,243 @@ namespace CacheControler_Project.Classes
 
         }
 
+        public List<AuditRecord> CachedAudit { get => cachedAudit;}
+        public Dictionary<string, string> CachedGeo { get => cachedGeo; }
+
         /// 
         /// <param name="geoRecord"></param>
         public EPostGeoEntityStatus AddNewGeoEntity(GeoRecord geoRecord)
         {
+            if(freeGeoRecords==0) throw new Exception();
 
-            return EPostGeoEntityStatus.Success;
+            if (cachedGeo.ContainsKey(geoRecord.GName) && cachedGeo[geoRecord.GName] == geoRecord.GID)     
+                return EPostGeoEntityStatus.DBWriteAborted;    // GID already recorded
+
+            if (m_ConnectionControler.GeoEntityWrite(geoRecord))
+            {
+                cachedGeo.Add(geoRecord.GName, geoRecord.GID);
+                freeGeoRecords--;
+                return EPostGeoEntityStatus.Success;
+            }
+            else return EPostGeoEntityStatus.DBWriteFailed;
+
         }
 
-        //public List<AuditRecord> CachedAudit
-        //{
-        //    get
-        //    {
-        //        return cachedAudit;
-        //    }
-        //    set
-        //    {
-        //        cachedAudit = value;
-        //    }
-        //}
-
-        //public Dictionary<DSpanGeoReq, CacheHit> CachedConsumption
-        //{
-        //    get
-        //    {
-        //        return cachedConsumption;
-        //    }
-        //    set
-        //    {
-        //        cachedConsumption = value;
-        //    }
-        //}
-
-        //public Dictionary<string, string> CachedGeo
-        //{
-        //    get
-        //    {
-        //        return cachedGeo;
-        //    }
-        //    set
-        //    {
-        //        cachedGeo = value;
-        //    }
-        //}
-
-        private int CacheGarbageCollector()
+        private void  CacheGarbageCollector()    // Task body awakens each minute and delete records 
         {
-
-            return 0;
+            int targetIndex;
+            while (true)
+            {
+                if (DateTime.Compare(futureCheckpoint, DateTime.Now.AddMinutes(1)) < 0) futureCheckpoint = DateTime.Now; //59 minutes passed
+                lock (cacheLock)   
+                {
+                    foreach (var elem in cachedConsumption)
+                    {
+                        if (!(DateTime.Compare(elem.Value.HitTime, futureCheckpoint) < 0))    // Record younger than 1 hour => still valid
+                        {
+                            targetIndex = orderedCacheOverlayKeys.IndexOf(elem.Key);          // Find index
+                            freeConsumptionRecords += orderedCacheOverlayHits[targetIndex];   // Update free space
+                            orderedCacheOverlayHits.RemoveAt(targetIndex);                    // Remove from cache-hit array
+                            orderedCacheOverlayKeys.RemoveAt(targetIndex);                    // Remoce from keys array
+                            cachedConsumption.Remove(elem.Key);
+                        }
+                    }
+                }
+                Task.Delay(garbageCollectorInterval);
+            }
+            
         }
 
-        /// 
-        /// <param name="readReq"></param>
-        public Tuple<EConcumptionReadStatus, List<ConsumptionRecord>> ConsumptionRead(DSpanGeoReq dSPanGeoReq)
+        private void UpdateOrder(DSpanGeoReq dSPanGeoReq)   //Keeps most hitted ones "on top"
         {
 
-            return null;
+            int elemLoc = orderedCacheOverlayKeys.IndexOf(dSPanGeoReq);
+            int hitVal = orderedCacheOverlayHits[elemLoc];
+
+            int targetLoc = elemLoc-1;
+            while (targetLoc >= 0 && orderedCacheOverlayHits[targetLoc] > hitVal) --targetLoc;   // Skip to find place
+
+            if(targetLoc>0) 
+            {
+                orderedCacheOverlayKeys.Insert(targetLoc, dSPanGeoReq);   // Replace
+                orderedCacheOverlayKeys.RemoveAt(elemLoc + 1);            // Delete old
+                orderedCacheOverlayHits.Insert(targetLoc, hitVal);        // Replace
+                orderedCacheOverlayKeys.RemoveAt(elemLoc + 1);            // Delete old
+            }
+
         }
 
-        /// 
-        /// <param name="update"></param>
-        public bool ConsumptionUpdateHandler(ConsumptionUpdate update)
+        private Tuple<List<ConsumptionRecord>, DSpanGeoReq> SecondarySubContentScan(DSpanGeoReq dSpanGeoReq)
         {
+            int cacheIdx = 0;
+            foreach (var cacheHit in cachedConsumption)
+            {
+                if (cacheHit.Key.GName == dSpanGeoReq.GName && cacheHit.Value.CRecord.Count>0 &&
+                    cacheHit.Value.CRecord[0].CheckTimeRelationMine(dSpanGeoReq.From, "<=", true) &&
+                    cacheHit.Value.CRecord[0].CheckTimeRelationMine(dSpanGeoReq.Till, "<=", true))
+                {
+                    int loc = 0;
+                    List<ConsumptionRecord> targetRecord = cacheHit.Value.CRecord;
+                    List<ConsumptionRecord> outRecords = new List<ConsumptionRecord>();
+                    while (targetRecord[loc].CheckTimeRelationMine(dSpanGeoReq.Till, ">", true)) ++loc; //Find left boudary (newest day), list is Desc
 
-            return false;
-        }
-
-        /// 
-        /// <param name="geoRecord"></param>
-        public EGeoRecordStatus ContainsGeo(GeoRecord geoRecord)
-        {
-
-            return EGeoRecordStatus.GeoRecordFree;
-        }
-
-        /// 
-        /// <param name="cRecordsNum"></param>
-        private int FreeSpace(int cRecordsNum)
-        {
-
-            return 0;
-        }
-
-        public List<AuditRecord> InitAuditLoad()
-        {
-
-            return null;
-        }
-
-        public List<string> InitGeoRecordLoad()
-        {
-
-            return null;
-        }
-
-        /// 
-        /// <param name="cacheHit"></param>
-        private bool StoreConsumption(CacheHit cacheHit)
-        {
-
-            return false;
-        }
-
-        /// 
-        /// <param name="oldID"></param>
-        /// <param name="newID"></param>
-        public EUpdateGeoStatus UpdateGeoEntity(string oldID, string newID)
-        {
-
-            return EUpdateGeoStatus.Success;
+                    while (loc < targetRecord.Count && targetRecord[loc].CheckTimeRelationMine(dSpanGeoReq.From, "<=", true))
+                    {
+                        outRecords.Add(targetRecord[loc]);
+                        ++loc;
+                    }
+                    outRecords.Reverse();
+                    return  new Tuple<List<ConsumptionRecord>, DSpanGeoReq>(outRecords, cacheHit.Key);
+                }
+                cacheIdx++;
+            }
+            return new Tuple<List<ConsumptionRecord>, DSpanGeoReq>(null, null); 
         }
 
         /// 
         /// <param name="dSpanGeoReq"></param>
         public Tuple<EConcumptionReadStatus, List<ConsumptionRecord>> DSpanGeoConsumptionRead(DSpanGeoReq dSpanGeoReq)
         {
+            if (!cachedGeo.ContainsKey(dSpanGeoReq.GName)) throw new Exception();
 
-            return null;
+            lock (cacheLock)
+            {
+                if (cachedConsumption.ContainsKey(dSpanGeoReq))
+                {
+                    orderedCacheOverlayHits[orderedCacheOverlayKeys.IndexOf(dSpanGeoReq)]++;   // For free space strategy
+                    UpdateOrder(dSpanGeoReq);                                                  // Update order
+                    return new Tuple<EConcumptionReadStatus, List<ConsumptionRecord>>
+                        (EConcumptionReadStatus.CacheReadSuccess, cachedConsumption[dSpanGeoReq].CRecord) ;
+                }
+                else
+                {
+                    Tuple<List<ConsumptionRecord>, DSpanGeoReq> result;      //Found as subcontent of existed cache hit
+                    if((result = SecondarySubContentScan(dSpanGeoReq)).Item1!=null)
+                    {
+                        orderedCacheOverlayHits[orderedCacheOverlayKeys.IndexOf(result.Item2)]++;
+                        UpdateOrder(result.Item2);
+                        return new Tuple<EConcumptionReadStatus, List<ConsumptionRecord>>
+                             (EConcumptionReadStatus.CacheReadSuccess, result.Item1);
+                    }
+
+                    try
+                    {
+                        //CacheHit
+                        var readResult= m_ConnectionControler.ConsumptionReqPropagate
+                            (new DSpanGeoReq(cachedGeo[dSpanGeoReq.GName], dSpanGeoReq.From, dSpanGeoReq.Till));  //User doesn't know GID only GNAME       
+                        if(freeConsumptionRecords < readResult.Count)   // Not enough space
+                        {
+                            int tmp;
+                            int reqSpace = readResult.Count - freeConsumptionRecords;
+                            do
+                            {
+                                tmp = orderedCacheOverlayHits.Count - 1;                    // Delete last one (the least hitted one)                
+                                reqSpace -= orderedCacheOverlayHits[tmp];                   // Now you need less memory
+                                freeConsumptionRecords += orderedCacheOverlayHits[tmp];     // Record it as free
+                                orderedCacheOverlayHits.RemoveAt(tmp);                      // Free it
+                                cachedConsumption.Remove(orderedCacheOverlayKeys[tmp]);     // Remove overlays
+                                orderedCacheOverlayKeys.RemoveAt(tmp);
+
+                            } while (reqSpace > 0);
+                        }
+
+                        // New CacheHit => HitRate == 1 => Add at the end of the list (list stays ordered)
+                        orderedCacheOverlayHits.Add(1);
+                        orderedCacheOverlayKeys.Add(dSpanGeoReq);
+                        cachedConsumption.Add(dSpanGeoReq, new CacheHit(readResult));
+                        return new Tuple<EConcumptionReadStatus, List<ConsumptionRecord>>
+                            (EConcumptionReadStatus.DBReadSuccess, readResult);
+
+                    }
+                    catch(Exception)  // Later add custom
+                    {
+                        return new Tuple<EConcumptionReadStatus, List<ConsumptionRecord>>
+                            (EConcumptionReadStatus.DBReadFailed, new List<ConsumptionRecord>());
+                    }
+                }
+            }
+        }
+
+        /// 
+        /// <param name="update"></param>
+        public bool ConsumptionUpdateHandler(string timeStampBase, ConsumptionUpdate update)
+        {
+            bool geoFull=false, 
+                 auditFull = false;
+
+            if (freeGeoRecords < update.NewGeos.Count) geoFull = true;                  //Has no memory to accept report
+            else
+            {
+                foreach (var geo in update.NewGeos)
+                {
+                    //if(!cachedGeo.ContainsKey(geo))   //DB side grants this
+                    //{
+                    cachedGeo.Add(geo, geo); //Loaded from file => same gName & GID
+                                             //}
+                }
+            }
+
+            if (freeAuditRecords < update.DupsAndMisses.Count) auditFull = true;
+            else
+            {
+                foreach(var record in update.DupsAndMisses)
+                {
+                    foreach(var dup in record.Value.Item1)
+                    {
+                        cachedAudit.Add(new AuditRecord(record.Key, timeStampBase + "-" + dup.Item1, dup.Item2));
+                    }
+
+                    foreach (var miss in record.Value.Item2)
+                    {
+                        cachedAudit.Add(new AuditRecord(record.Key, timeStampBase + "-" + miss, -1));
+                    }
+
+                }
+
+            }
+
+            if (auditFull && geoFull) throw new Exception();    //Later implent custom ones
+            if (auditFull)            throw new Exception();
+            if (geoFull)              throw new Exception();
+
+
+            return true;
+        }
+
+        /// 
+        /// <param name="geoRecord"></param>
+        public EGeoRecordStatus ContainsGeo(GeoRecord geoRecord)
+        {
+            if (cachedGeo.ContainsKey(geoRecord.GName))
+            {
+                if (cachedGeo[geoRecord.GName] == geoRecord.GID)
+                     return EGeoRecordStatus.GeoRecordUsed;
+                else return EGeoRecordStatus.GNameUsed;
+            }
+            else if (cachedGeo.ContainsValue(geoRecord.GID))
+                     return EGeoRecordStatus.GIDUsed;
+
+            return EGeoRecordStatus.GeoRecordFree;
+            
+        }
+
+        /// 
+        /// <param name="oldID"></param>
+        /// <param name="newID"></param>
+        public EUpdateGeoStatus UpdateGeoEntity(string oldName, string newName)
+        {
+            if (cachedGeo.ContainsKey(oldName))
+            {
+                try
+                { 
+                    var retVal = m_ConnectionControler.GeoEntityUpdate(oldName, newName);
+                    cachedGeo.Add(newName, cachedGeo[oldName]);
+                    cachedGeo.Remove(oldName);
+                } 
+                catch (Exception)
+                { return EUpdateGeoStatus.DBWriteFailed; }
+            }
+            return EUpdateGeoStatus.OriginNotFound;
         }
 
     }//end CacheControler

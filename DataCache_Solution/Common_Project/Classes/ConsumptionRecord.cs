@@ -13,6 +13,7 @@ using System.IO;
 
 namespace Common_Project.Classes
 {
+    [Serializable]
     public class ConsumptionRecord
     {
 
@@ -96,6 +97,67 @@ namespace Common_Project.Classes
             if (timeStamp[timeStamp.Length - 2] == '-') return Int32.Parse(String.Format("{0}", timeStamp[timeStamp.Length - 1]));
             return Int32.Parse(String.Format("{0}{1}", timeStamp[timeStamp.Length - 2], timeStamp[timeStamp.Length - 1]));
         }
+
+        public bool CheckTimeRelationMine(string timePoint, string relation, bool ignoreHours)
+        {
+            string[] olderParts;
+            string[] newerParts; 
+
+            if (relation == ">=" || relation == ">")                           //Am I ">=" from timePoint
+            {
+                olderParts = timePoint.Split('-');
+                newerParts = TimeStamp.Split('-');
+            }
+            else if (relation == "<=" || relation == "<")
+            {
+                olderParts = TimeStamp.Split('-');
+                newerParts = timePoint.Split('-');
+            }
+            else throw new ArithmeticException();
+
+
+            int tmpOlder, tmpNewer;
+            if ((tmpOlder = Int32.Parse(olderParts[0])) == (tmpNewer = Int32.Parse(newerParts[0])))             //Same year
+            {
+                if ((tmpOlder = Int32.Parse(olderParts[1])) == (tmpNewer = Int32.Parse(newerParts[1])))         //Same same month
+                {
+                    if ((tmpOlder =Int32.Parse(olderParts[2])) <= (tmpNewer =Int32.Parse(newerParts[2])))       //Day before or eq 
+                    {
+
+                        if(ignoreHours)                                                                         //Ignore hours, final check on days
+                        {
+                            if ((relation == "<" || relation == ">") && tmpOlder < tmpNewer)   return true;
+                            if ((relation == ">" || relation == ">=") && tmpOlder <= tmpNewer) return true;
+                            return false;
+                        }
+
+                        // Not ignoring hours & when hour check is needed
+                        if (tmpOlder == tmpNewer && (tmpOlder=Int32.Parse(olderParts[3])) <= (tmpNewer =Int32.Parse(newerParts[3])))           
+                        {
+                            if ((relation == "<" || relation == ">") && tmpOlder < tmpNewer) return true;
+                            if ((relation == ">" || relation == ">=") && tmpOlder <= tmpNewer) return true;
+                            return false;
+                        }
+
+                        //No hours check needed, final check on days
+                        if ((relation == "<" || relation == ">") && tmpOlder < tmpNewer) return true;
+                        if ((relation == ">" || relation == ">=") && tmpOlder <= tmpNewer) return true;
+                        return false;
+                    }
+                    else
+                        return false;
+                }
+                else if (tmpOlder < tmpNewer)
+                    return true;
+                else
+                    return false;
+            }
+            else if (tmpOlder < tmpNewer)
+                return true;
+            else return false;
+        }
+
+       
 
     }//end ConsumptionRecord
 }

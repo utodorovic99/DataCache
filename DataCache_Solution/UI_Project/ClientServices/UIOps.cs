@@ -13,7 +13,7 @@ using System.IO;
 using CacheControler_Project.Enums;
 using Common_Project.Classes;
 using FileControler_Project.Enums;
-using UI_Project.Classes.UI_Project.Classes;
+
 
 namespace UI_Project.Classes
 {
@@ -27,9 +27,6 @@ namespace UI_Project.Classes
         /// 
         /// <param name="readReq"></param>
         Tuple<EConcumptionReadStatus, List<ConsumptionRecord>> InitConsumptionRead(DSpanGeoReq dSpanGeoReq);
-
-        InitData InitDataLoad();
-
         /// 
         /// <param name="filePath"></param>
         /// <param name="dataType"></param>
@@ -37,10 +34,10 @@ namespace UI_Project.Classes
 
         /// 
         /// <param name="gEntity"></param>
-        Tuple<EPostGeoEntityStatus, EGeoRecordStatus> PostGeoEntitiy(GeoRecord gEntity);
+        EPostGeoEntityStatus PostGeoEntitiy(GeoRecord gEntity);
 
         /// 
         /// <param name="name"></param>
-        EUpdateGeoStatus UpdateGeoEntity(string name);
+        EUpdateGeoStatus UpdateGeoEntity(string oldName, string newName);
     }//end IUIOps
 }

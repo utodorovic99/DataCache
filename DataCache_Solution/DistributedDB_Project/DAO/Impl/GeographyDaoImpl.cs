@@ -13,7 +13,6 @@ using System.IO;
 using Common_Project.Classes;
 using System.Data;
 using DistributedDB_Project.Connection;
-using DistributedDB_Project.Exceptions.GeographyExceptions;
 using DistributedDB_Project.DAO.Impl;
 using DistributedDB_Project.Exceptions.ExceptionAbstraction;
 using Oracle.ManagedDataAccess.Client;
@@ -54,14 +53,7 @@ public class GeographyDaoImpl : IGeographyDAO {
             {
                 command.CommandText = query;
                 command.Prepare();
-                try
-                {
-                    command.ExecuteNonQuery();
-                }
-                catch (OracleException oe)
-                {
-                    throw oe;
-                }
+                command.ExecuteNonQuery();
             }
         }
     }
@@ -73,23 +65,15 @@ public class GeographyDaoImpl : IGeographyDAO {
         {
             command.CommandText = query;
             command.Prepare();
-            try
-            {
-                command.ExecuteNonQuery();
-            }
-            catch (OracleException oe)
-            {
-                Console.WriteLine("ERROR: {0}", oe.Message);
-                //throw oe;
-            }
+            command.ExecuteNonQuery();
         }
-
     }
 
     private bool IsAttached(string gID, IDbConnection connection)
     {
-        string query = String.Format("SELECT COUNT(*) FROM EES ee " +
-                                    "WHERE ee.GID='{0}' ", gID);
+        string query = String.Format
+                              ("SELECT COUNT(*) FROM EES ee " +
+                               "WHERE ee.GID='{0}' ", gID);
 
         using (IDbCommand command = connection.CreateCommand())
         {
@@ -99,7 +83,7 @@ public class GeographyDaoImpl : IGeographyDAO {
         }
     }
 
-    public void Delete(GeoRecord entity)
+    public bool Delete(GeoRecord entity)
     {
         if(ExistsById(entity.GID))
         {
@@ -115,9 +99,10 @@ public class GeographyDaoImpl : IGeographyDAO {
                 }
                 else
                 {
-                    string query = String.Format("DELETE "+
-                                                 "FROM geography_subsystem gg " +
-                                                 "WHERE gg.GID='{0}' ",entity.GID);
+                    string query = String.Format
+                                          ("DELETE "+
+                                           "FROM geography_subsystem gg " +
+                                           "WHERE gg.GID='{0}' ",entity.GID);
 
                     using (IDbCommand command = connection.CreateCommand())
                     {
@@ -125,13 +110,11 @@ public class GeographyDaoImpl : IGeographyDAO {
                         command.Prepare();
                         command.ExecuteNonQuery();
                     }
+                    return true;
                 }   
             }
         }
-        else
-        {
-            throw new GeoRecordNotFoundException("Targeted GID not found", entity.GID, "");
-        }
+        else return false;
     }
 
     public void DeleteAll() // All available
@@ -157,9 +140,9 @@ public class GeographyDaoImpl : IGeographyDAO {
         DeleteById(targs);  // Mocking
     }
 
-    public void DeleteById(string id)
+    public bool DeleteById(string id)
     {
-        Delete(new GeoRecord(id, ""));// Mocking
+        return Delete(new GeoRecord(id, ""));// Mocking
     }
 
     public void DeleteById(List<string> targs)
@@ -173,9 +156,10 @@ public class GeographyDaoImpl : IGeographyDAO {
                 {
                     if (!IsAttached(entity, connection))
                     {
-                        string query = String.Format("DELETE " +
-                                                     "FROM geography_subsystem gg " +
-                                                     "WHERE gg.GID='{0}' ", entity);
+                        string query = String.Format
+                                              ("DELETE " +
+                                               "FROM geography_subsystem gg " +
+                                               "WHERE gg.GID='{0}' ", entity);
 
                         using (IDbCommand command = connection.CreateCommand())
                         {
@@ -184,11 +168,9 @@ public class GeographyDaoImpl : IGeographyDAO {
                             command.ExecuteNonQuery();
                         }
                     }
-
                 }
             }
         }
-  
     }
 
     public bool ExistsById(string id)
@@ -199,14 +181,14 @@ public class GeographyDaoImpl : IGeographyDAO {
             using (IDbCommand command = connection.CreateCommand())
             {
 
-                string query = String.Format("SELECT gg.GID " +
-                                             "FROM geography_subsystem gg " +
-                                             "WHERE gg.GID = '{0}' ", id);
-
+                string query = String.Format
+                                      ("SELECT gg.GID " +
+                                       "FROM geography_subsystem gg " +
+                                       "WHERE gg.GID = '{0}' ", id);
 
                 command.CommandText = query;
                 command.Prepare();
-                return command.ExecuteScalar() != "";
+                return command.ExecuteScalar() != null;
             }
         }
     }
@@ -216,21 +198,35 @@ public class GeographyDaoImpl : IGeographyDAO {
 
         using (IDbCommand command = connection.CreateCommand())
         {
-
-            string query = String.Format("SELECT gg.GID " +
-                                            "FROM geography_subsystem gg " +
-                                            "WHERE gg.GID = '{0}' ", id);
-
+            string query = String.Format
+                                  ("SELECT gg.GID " +
+                                   "FROM geography_subsystem gg " +
+                                   "WHERE gg.GID = '{0}' ", id);
 
             command.CommandText = query;
             command.Prepare();
-
             return command.ExecuteScalar() != null;
         }
         
     }
 
+    public bool ExistsByName(string name, IDbConnection connection)
+    {
 
+        using (IDbCommand command = connection.CreateCommand())
+        {
+
+            string query = String.Format
+                                  ("SELECT gg.GID " +
+                                   "FROM geography_subsystem gg " +
+                                   "WHERE gg.GNAME = '{0}' ", name);
+
+            command.CommandText = query;
+            command.Prepare();
+            return command.ExecuteScalar() != null;
+        }
+
+    }
 
     private IEnumerable<GeoRecord> GetMultipleGeosByQuery(string query) // Better solution for future upgrades
     {
@@ -251,19 +247,17 @@ public class GeographyDaoImpl : IGeographyDAO {
                     {
                         try
                         {
-
-                            tmpGID  = reader.GetString(0);
+                            tmpGID   = reader.GetString(0);
                             tmpGName = reader.GetString(1);
                             retVal.Add(new GeoRecord(tmpGID, tmpGName));
                         }
                         catch (ArgumentNullException)
                         {
-                            //Nothing to read
-                            throw new GeoRecordNotFoundException("Invalid search arguments", "", "");
+                            return retVal;
                         }
-                        catch (System.InvalidOperationException) // ????
+                        catch (System.InvalidOperationException) 
                         {
-                            throw new GeoRecordNotFoundException("Invalid search arguments", "", "");
+                            return retVal;
                         }
                         
                     };
@@ -296,14 +290,12 @@ public class GeographyDaoImpl : IGeographyDAO {
                     }
                     catch (ArgumentNullException)
                     {
-                        //Nothing to read
-                        throw new GeoRecordNotFoundException("Invalid search arguments", "", "");
+                        return retVal;
                     }
-                    catch(System.InvalidOperationException) // ????
+                    catch (System.InvalidOperationException)
                     {
-                        throw new GeoRecordNotFoundException("Invalid search arguments", "", "");
+                        return retVal;
                     }
-
                 }
             }
         }
@@ -320,25 +312,29 @@ public class GeographyDaoImpl : IGeographyDAO {
 
     public IEnumerable<GeoRecord> FindAllById(IEnumerable<string> ids)
     {
-        string query = String.Format("SELECT gg.GID, gg.GNAME " +
-                                     "FROM geography_subsystem gg " +
-                                     "WHERE gg.GID IN {0}", CommonImpl.FormatComplexVarCharArgument(ids));
+        string query = String.Format
+                              ("SELECT gg.GID, gg.GNAME " +
+                               "FROM geography_subsystem gg " +
+                               "WHERE gg.GID IN {0}", CommonImpl.FormatComplexVarCharArgument(ids));
+
         return GetMultipleGeosByQuery(query);
     }
 
     public GeoRecord FindById(string id)
     {
-        string query = String.Format("SELECT gg.GID, gg.GNAME " +
-                                     "FROM geography_subsystem gg "+
-                                     "WHERE gg.GID = '{0}' ", id);
+        string query = String.Format
+                              ("SELECT gg.GID, gg.GNAME " +
+                               "FROM geography_subsystem gg "+
+                               "WHERE gg.GID = '{0}' ", id);
 
         return GetSingleGeoByQuery(query);
     }
 
     public void Save(GeoRecord entity)
     {
-       string query = String.Format("SELECT COUNT(*) FROM geography_subsystem gg " +
-                                    "WHERE gg.GID = '{0}' ", entity.GID);
+       string query = String.Format
+                             ("SELECT COUNT(*) FROM geography_subsystem gg " +
+                              "WHERE gg.GID = '{0}' ", entity.GID);
 
         using (IDbConnection connection = ConnectionUtil_Pooling.GetConnection())
         {
@@ -350,8 +346,9 @@ public class GeographyDaoImpl : IGeographyDAO {
                 if(Convert.ToInt32(command.ExecuteScalar())==0)
                 {
                     //To add
-                    query = String.Format( "INSERT INTO geography_subsystem (GID,GNAME) " +
-                                            "VALUES ('{0}', '{1}') ", entity.GID, entity.GName);
+                    query = String.Format
+                                   ("INSERT INTO geography_subsystem (GID,GNAME) " +
+                                    "VALUES ('{0}', '{1}') ", entity.GID, entity.GName);
                     command.CommandText = query;
                     command.Prepare();
                     command.ExecuteNonQuery();
@@ -397,32 +394,27 @@ public class GeographyDaoImpl : IGeographyDAO {
         }
     }
 
-    public void SingleGeoUpdate(string oldGeoID, string newGeoID)
+    public void SingleGeoUpdate(string oldGeoName, string newGeoName)
     {
         using (IDbConnection connection = ConnectionUtil_Pooling.GetConnection())
         {
             connection.Open();
 
-                if(ExistsById(oldGeoID, connection))
+            if(ExistsByName(oldGeoName, connection))
+            {
+                using (IDbCommand command = connection.CreateCommand())
                 {
-                    using (IDbCommand command = connection.CreateCommand())
-                    {
-                        string query = String.Format("UPDATE geography_subsystem " +
-                                                     "SET GNAME = '{0}' " +
-                                                     "WHERE GID = '{1}' ", newGeoID, oldGeoID);
+                    string query = String.Format("UPDATE geography_subsystem " +
+                                                    "SET GNAME = '{0}' " +
+                                                    "WHERE GNAME = '{1}' ", newGeoName, oldGeoName);
 
-                        command.CommandText = query;
-                        command.Prepare();
-                        command.ExecuteNonQuery();
+                    command.CommandText = query;
+                    command.Prepare();
+                    command.ExecuteNonQuery();
 
-                    }
                 }
-                else
-                {
-                    throw new PrimaryKeyConstraintViolationException(newGeoID, "geography_subsystem", "Primary key(GID): " +
-                                                            newGeoID + " target key not found: geography_subsystem");
-                }
-            
+            }     
         }
     }
+
 }//end GeographyDaoImpl

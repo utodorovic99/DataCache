@@ -17,11 +17,11 @@ public interface ICRUDDao<T, ID>
 {
 	int Count();
 
-	void Delete(T entity);
+	bool Delete(T entity);
 
 	void DeleteAll();
 
-	void DeleteById(ID id);
+	bool DeleteById(ID id);
 
 	bool ExistsById(ID id);
 

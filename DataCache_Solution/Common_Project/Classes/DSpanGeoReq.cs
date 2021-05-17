@@ -13,6 +13,7 @@ using System.IO;
 
 namespace Common_Project.Classes
 {
+    [Serializable]
     public class DSpanGeoReq
     {
 
@@ -20,10 +21,13 @@ namespace Common_Project.Classes
         private string gName;
         private string till;
 
-        public DSpanGeoReq()
+        public DSpanGeoReq(string gName, string from, string till)
         {
-
+            this.from=from;
+            this.gName=gName;
+            this.till=till;
         }
+
 
         ~DSpanGeoReq()
         {
@@ -66,5 +70,9 @@ namespace Common_Project.Classes
             }
         }
 
+        public override string ToString()
+        {
+            return String.Format("Search request From:\t{0} \tTill:\t{1} \tfor area:\t{2}", from, till, GName);
+        }
     }//end DSpanGeoReq
 }

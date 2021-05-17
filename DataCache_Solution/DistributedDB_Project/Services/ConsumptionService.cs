@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.IO;
 using Common_Project.Classes;
+using System.Linq;
 
 public class ConsumptionService {
 
@@ -38,7 +39,7 @@ public class ConsumptionService {
 	/// <param name="from"></param>
 	/// <param name="till"></param>
 	public List<ConsumptionRecord> HandleGetByCountryAndDatespan(string gID, string fromTimestamp, string tillTimestamp){
-		return m_IConsumptionDAO.FindByCountryAndDatespan(gID, fromTimestamp, tillTimestamp);
+		return SortDesc(m_IConsumptionDAO.FindByCountryAndDatespan(gID, fromTimestamp, tillTimestamp));
 	}
 
 	public List<ConsumptionRecord> HandleGetByGeographyAndAfterDate(string gID, string from){
@@ -63,7 +64,7 @@ public class ConsumptionService {
 
 	public List<ConsumptionRecord> HandleFindConsumptionAll()
 	{
-		return (List<ConsumptionRecord>)m_IConsumptionDAO.FindAll();
+		return SortDesc((List<ConsumptionRecord>)m_IConsumptionDAO.FindAll());
 	}
 
 	public List<ConsumptionRecord> HandleFindAllByCID(IEnumerable<string> keys)
@@ -92,19 +93,45 @@ public class ConsumptionService {
 		return m_IConsumptionDAO.ExistsById(key);
     }
 
-	public void HandleDeleteByContent(ConsumptionRecord target)
+	public bool HandleDeleteByContent(ConsumptionRecord target)
     {
-		 m_IConsumptionDAO.Delete(target);
+		return m_IConsumptionDAO.Delete(target);
     }
 
-	public void HandleDeleteByCID(string cID)
+	public bool HandleDeleteByCID(string cID)
     {
-		m_IConsumptionDAO.DeleteById(cID);
+		return m_IConsumptionDAO.DeleteById(cID);
     }
 
 	public void HandleDeleteAll()
 	{
 		m_IConsumptionDAO.DeleteAll();
+	}
+
+	private int FindMax(List<ConsumptionRecord> source, int startIdx)
+	{
+		int maxIDX = startIdx;
+		for (int loc = startIdx + 1; loc < source.Count; loc++)
+		{
+			if (source[loc].CheckTimeRelationMine(source[maxIDX].TimeStamp, ">", false))
+				maxIDX = loc;
+		}
+		return maxIDX;
+	}
+
+	private List<ConsumptionRecord> SortDesc(List<ConsumptionRecord> source)
+	{
+		int maxIDX;
+		for (int loc = 0; loc < source.Count; ++loc)
+		{
+			maxIDX = FindMax(source, loc);
+			if (maxIDX != loc)
+			{
+				source.Insert(loc, source[maxIDX]);		//Insert max one at right position
+				source.RemoveAt(maxIDX+1);				//Remove max duplicate
+			}
+		}
+		return source;
 	}
 
 }//end ConsumptionService

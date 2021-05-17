@@ -1,6 +1,5 @@
 ﻿using Common_Project.Classes;
 using DistributedDB_Project.Exceptions.ExceptionAbstraction;
-using DistributedDB_Project.Exceptions.GeographyExceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -74,8 +73,17 @@ namespace DistributedDB_Project.DistributedCallHandler
             } while (!answer.ToUpper().Equals("X"));
         }
 
-        private void FormatedPrintOut(List<GeoRecord> records)
-        { foreach (var record in records) Console.WriteLine(record.ToString()); }
+        private void FormatedPrintOut(Dictionary<string, string> records)
+        { 
+            foreach (var record in records) 
+                Console.WriteLine("GID: "+record.Value + "\t"+"GNAME: "+record.Key); 
+        }
+
+        private void FormatedPrintOut(List<GeoRecord> records )
+        {
+            foreach (var record in records)
+                Console.WriteLine(record);
+        }
 
         private void ShowAll()
         {
@@ -86,19 +94,15 @@ namespace DistributedDB_Project.DistributedCallHandler
         private void ShowByGID()
         {
             Console.Write("Enter target GID: ");
-            try
+            
+            var retVal = geographyService.HandleShowByGID(Console.ReadLine());
+            if (retVal.IsEmpty())
+                Console.WriteLine("\t\t<< TARGET ELEMENT NOT FOUND >>" + Environment.NewLine);
+            else
             {
-                var retVal = geographyService.HandleShowByGID(Console.ReadLine());
                 Console.WriteLine("\t\t<< TARGET ELEMENT FOUND >>" + Environment.NewLine);
                 Console.WriteLine(retVal);
-
-            }
-            catch(GeoRecordNotFoundException)
-            {
-                Console.WriteLine("\t\t<< TARGET ELEMENT NOT FOUND >>" + Environment.NewLine);
-            }
-
-         
+            } 
         }
 
         private void ShowMultipleByGID()
@@ -167,18 +171,21 @@ namespace DistributedDB_Project.DistributedCallHandler
             try 
             {
                 Console.Write("Enter GID to ");
-                geographyService.HandleDeleteSingleGeoByGID(Console.ReadLine());
-                Console.WriteLine("\t\t<< SUCCESSFULLY DELTED >>\n");
-                ShowAll();
+                if (geographyService.HandleDeleteSingleGeoByGID(Console.ReadLine()))
+                {
+                    Console.WriteLine("\t\t<< SUCCESSFULLY DELTED >>\n");
+                    ShowAll();
+                }
+                else
+                {
+                    Console.WriteLine("\t\t<< RECORD DELETE FAILED >>\nError: Element not found");
+                }
             }
             catch(StillAttachedException stex)
             {
                 Console.WriteLine("\t\t<< RECORD DELETE FAILED >>\nError: {0}", stex.Message);
             }
-            catch(GeoRecordNotFoundException ex)
-            {
-                Console.WriteLine("\t\t<< RECORD DELETE FAILED >>\nError: {0}", ex.Message);
-            }
+
         }
 
         private void DeleteMultipleGeoByGID()

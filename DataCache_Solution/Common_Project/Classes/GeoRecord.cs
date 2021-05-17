@@ -13,6 +13,7 @@ using System.IO;
 
 namespace Common_Project.Classes
 {
+    [Serializable]
     public class GeoRecord
     {
 
@@ -21,7 +22,8 @@ namespace Common_Project.Classes
 
         public GeoRecord()
         {
-
+            gID = "";
+            gName = "";
         }
 
         public GeoRecord(string gID, string gName)
@@ -59,6 +61,7 @@ namespace Common_Project.Classes
             }
         }
 
+        public bool IsEmpty() { return gName == "" && gID == ""; }
         public override string ToString()
         {
             return string.Format("Geographic entity: GID: {0}\tName: {1}", gID, gName);

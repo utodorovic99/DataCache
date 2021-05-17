@@ -13,7 +13,6 @@ using System.IO;
 using Common_Project.Classes;
 using System.Data;
 using DistributedDB_Project.Connection;
-using DistributedDB_Project.Exceptions.AuditExceptions;
 using DistributedDB_Project.DAO.Impl;
 using DistributedDB_Project.Exceptions.ExceptionAbstraction;
 
@@ -39,17 +38,15 @@ public class AuditDAOImpl : IAuditDAO {
                 command.Prepare();
                 using (IDataReader reader = command.ExecuteReader())
                 {
-                    reader.Read();
                     try
                     {
+                        reader.Read();
                         retVal = new AuditRecord(reader.GetString(0), reader.GetString(1), reader.GetInt32(2));
                     }
                     catch (ArgumentNullException)
                     {
-                        //Nothing to read
-                        throw new AuditNotFoundException("", "", "Targeted moment(or RECID) has no audit records");
+                        return new AuditRecord();
                     }
-
                 }
             }
         }
@@ -59,7 +56,6 @@ public class AuditDAOImpl : IAuditDAO {
     private IEnumerable<AuditRecord> LoadAuditRecordsMultipleByQuery(string query)
     {
         List<AuditRecord> retVal = new List<AuditRecord>();
-
         using (IDbConnection connection = ConnectionUtil_Pooling.GetConnection())
         {
             connection.Open();
@@ -95,7 +91,7 @@ public class AuditDAOImpl : IAuditDAO {
         }
     }
 
-    public void Delete(AuditRecord entity)
+    public bool Delete(AuditRecord entity)
     {
         throw new ForbiddenOrderException("Each audit record is conneted to its EES record (geo-time context).\n" +
             "Are deleted automatically trough consumption delete");
@@ -107,7 +103,7 @@ public class AuditDAOImpl : IAuditDAO {
             "Are deleted automatically trough consumption delete");
     }
 
-    public void DeleteById(string id)
+    public bool DeleteById(string id)
     {
         throw new ForbiddenOrderException("Each audit record is conneted to its EES record (geo-time context).\n+" +
             "Are deleted automatically trough consumption delete");
@@ -146,10 +142,11 @@ public class AuditDAOImpl : IAuditDAO {
     public IEnumerable<AuditRecord> FindAllById(IEnumerable<string> ids)
     {
 
-        string query = String.Format("SELECT ee.GID, ee.time_stamp, ca.dupval " +
-                                     "FROM consumption_audited cad LEFT OUTER JOIN ees ee ON cad.recid = ee.recid "+
-                                            " LEFT OUTER JOIN consumption_audit ca ON cad.aid = ca.aid " +
-                                    "WHERE cad.AID IN {0} ", CommonImpl.FormatComplexArgument(ids));
+        string query = String.Format
+                       ("SELECT ee.GID, ee.time_stamp, ca.dupval " +
+                        "FROM consumption_audited cad LEFT OUTER JOIN ees ee ON cad.recid = ee.recid "+
+                            " LEFT OUTER JOIN consumption_audit ca ON cad.aid = ca.aid " +
+                        "WHERE cad.AID IN {0} ", CommonImpl.FormatComplexArgument(ids));
 
         return LoadAuditRecordsMultipleByQuery(query);
     }
@@ -157,10 +154,10 @@ public class AuditDAOImpl : IAuditDAO {
     public AuditRecord FindById(string id)
     {
         string query = "SELECT ee.GID, ee.time_stamp, ca.dupval " +
-                 "FROM ees ee, consumption_audited cad, consumption_audit ca " +
-                 "WHERE ee.RECID = cad.RECID " +
-                 "AND cad.AID = ca.AID "+
-                 "AND ca.AID = "+id;
+                       "FROM ees ee, consumption_audited cad, consumption_audit ca " +
+                       "WHERE ee.RECID = cad.RECID " +
+                       "AND cad.AID = ca.AID "+
+                       "AND ca.AID = "+id;
 
         return LoadAuditRecordSingleByQuery(query);
     }
@@ -178,10 +175,10 @@ public class AuditDAOImpl : IAuditDAO {
     public IEnumerable<AuditRecord> DuplicatesAll()
     {
         string query = "SELECT ee.GID, ee.time_stamp, ca.dupval " +
-                "FROM ees ee, consumption_audited cad, consumption_audit ca " +
-                "WHERE ee.RECID = cad.RECID " +
-                "AND cad.AID = ca.AID "+
-                "AND ca.DUPVAL <> -1 ";
+                       "FROM ees ee, consumption_audited cad, consumption_audit ca " +
+                       "WHERE ee.RECID = cad.RECID " +
+                       "AND cad.AID = ca.AID "+
+                       "AND ca.DUPVAL <> -1 ";
 
         return LoadAuditRecordsMultipleByQuery(query);
     }
@@ -199,32 +196,34 @@ public class AuditDAOImpl : IAuditDAO {
     public IEnumerable<AuditRecord> MissesAll()
     {
         string query = "SELECT ee.GID, ee.time_stamp, ca.dupval " +
-        "FROM ees ee, consumption_audited cad, consumption_audit ca " +
-        "WHERE ee.RECID = cad.RECID " +
-        "AND cad.AID = ca.AID " +
-        "AND ca.DUPVAL = -1 ";
+                       "FROM ees ee, consumption_audited cad, consumption_audit ca " +
+                       "WHERE ee.RECID = cad.RECID " +
+                       "AND cad.AID = ca.AID " +
+                       "AND ca.DUPVAL = -1 ";
 
         return LoadAuditRecordsMultipleByQuery(query);
     }
     public IEnumerable<AuditRecord> MissesAllByGeo(string gID)
     {
-        string query = String.Format("SELECT ee.GID, ee.time_stamp, ca.dupval " +
-                                 "FROM ees ee, consumption_audited cad, consumption_audit ca " +
-                                 "WHERE ee.RECID = cad.RECID " +
-                                 "AND cad.AID = ca.AID " +
-                                 "AND ca.DUPVAL = -1 " +
-                                 "AND ee.GID = '{0}' ", gID);
+        string query = String.Format
+                              ("SELECT ee.GID, ee.time_stamp, ca.dupval " +
+                               "FROM ees ee, consumption_audited cad, consumption_audit ca " +
+                               "WHERE ee.RECID = cad.RECID " +
+                               "AND cad.AID = ca.AID " +
+                               "AND ca.DUPVAL = -1 " +
+                               "AND ee.GID = '{0}' ", gID);
 
         return LoadAuditRecordsMultipleByQuery(query);
     }
 
     public IEnumerable<AuditRecord> DupsAndMissesByGeo(string gID)
     {
-        string query = String.Format("SELECT ee.GID, ee.time_stamp, ca.dupval " +
-                         "FROM ees ee, consumption_audited cad, consumption_audit ca " +
-                         "WHERE ee.RECID = cad.RECID " +
-                         "AND cad.AID = ca.AID " +
-                         "AND ee.GID = '{0}' ", gID);
+        string query = String.Format
+                              ("SELECT ee.GID, ee.time_stamp, ca.dupval " +
+                               "FROM ees ee, consumption_audited cad, consumption_audit ca " +
+                               "WHERE ee.RECID = cad.RECID " +
+                               "AND cad.AID = ca.AID " +
+                               "AND ee.GID = '{0}' ", gID);
 
         return LoadAuditRecordsMultipleByQuery(query);
     }

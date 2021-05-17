@@ -15,8 +15,9 @@ using CacheControler_Project.Enums;
 using Common_Project.Classes;
 using FileControler_Project.Enums;
 using FileControler_Project.Classes;
-using UI_Project.Classes.UI_Project.Classes;
+
 using Common_Project.DistributedServices;
+using System.Linq;
 
 namespace UI_Project.Classes
 {
@@ -39,13 +40,12 @@ namespace UI_Project.Classes
 
         public List<AuditRecord> GetAuditEntities()
         { 
-            return null;
+            return m_CacheControler.CachedAudit;
         }
 
         public List<string> GetGeographicEntities()
         {
-
-            return null;
+            return m_CacheControler.CachedGeo.Keys.ToList() ;
         }
 
         /// 
@@ -55,11 +55,6 @@ namespace UI_Project.Classes
             return m_CacheControler.DSpanGeoConsumptionRead(dSpanGeoReq);
         }
 
-        public InitData InitDataLoad()
-        {
-            return null;
-        }
-
         /// 
         /// <param name="filePath"></param>
         /// <param name="dataType"></param>
@@ -67,23 +62,22 @@ namespace UI_Project.Classes
         {
 
             var fileLoadStoreDBResult = m_FileControler.LoadFileStoreDB(filePath, dataType);
-            //m_CacheControler.ConsumptionUpdateHandler(fileLoadStoreDBResult.Item2);		// TODO in Cache component
-            return fileLoadStoreDBResult.Item1;
+            m_CacheControler.ConsumptionUpdateHandler(fileLoadStoreDBResult.Item1, fileLoadStoreDBResult.Item2.Item2);		
+            return fileLoadStoreDBResult.Item2.Item1;
         }
 
         /// 
         /// <param name="gEntity"></param>
-        public Tuple<EPostGeoEntityStatus, EGeoRecordStatus> PostGeoEntitiy(GeoRecord gEntity)
+        public EPostGeoEntityStatus PostGeoEntitiy(GeoRecord gEntity)
         {
-
-            return null;
+            return m_CacheControler.AddNewGeoEntity(gEntity);
         }
 
         /// 
         /// <param name="name"></param>
-        public EUpdateGeoStatus UpdateGeoEntity(string name)
+        public EUpdateGeoStatus UpdateGeoEntity(string oldName, string newName)
         {
-
+            m_CacheControler.UpdateGeoEntity(oldName, newName);
             return EUpdateGeoStatus.Success;
         }
 

@@ -25,9 +25,19 @@ public class GeographyService {
 
 	}
 
-	public List<GeoRecord> HandleShowAll(){
+	public Dictionary<string, string> HandleShowAll(){
 
-		return m_IGeographyDAO.FindAll() as List<GeoRecord>;
+		var loadedGeos = m_IGeographyDAO.FindAll();
+
+		// Client side has less resources use fast server to
+		// covert it into dictionary to make things faster
+		// on client side
+		Dictionary<string, string> retVal = new Dictionary<string, string>();
+		foreach(var loadedGeo in loadedGeos)
+        {
+			retVal.Add(loadedGeo.GName, loadedGeo.GID); // Reverse Table key is not dictionary key 
+		}												// because client only knows name not ID, faster search
+		return retVal;
 	}
 
 	public GeoRecord HandleShowByGID(string key)
@@ -65,9 +75,9 @@ public class GeographyService {
 
 
 
-	public void HandleDeleteSingleGeoByGID(string targetGID)
+	public bool HandleDeleteSingleGeoByGID(string targetGID)
     {
-		m_IGeographyDAO.DeleteById(targetGID);
+		return m_IGeographyDAO.DeleteById(targetGID);
     }
 
 

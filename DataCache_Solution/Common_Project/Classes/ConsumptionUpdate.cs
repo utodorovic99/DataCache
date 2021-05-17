@@ -13,9 +13,10 @@ using System.IO;
 
 namespace Common_Project.Classes
 {
+    [Serializable]
     public class ConsumptionUpdate
     {
-
+        private string timeStampBase;
         private Dictionary<string, Tuple<List<Tuple<int, int>>,List<int>>> dupsAndMisses;
         private List<string> newGeos;   
 
@@ -23,6 +24,7 @@ namespace Common_Project.Classes
         {
             dupsAndMisses = new Dictionary<string, Tuple<List<Tuple<int, int>>, List<int>>>();
             newGeos = new List<string>();
+            timeStampBase = "";
         }
 
         ~ConsumptionUpdate()
@@ -39,6 +41,19 @@ namespace Common_Project.Classes
             set
             {
                 dupsAndMisses = value;
+            }
+        }
+
+        public string TimeStampBase
+        {
+            get
+            {
+                return timeStampBase;
+            }
+
+            set
+            {
+                timeStampBase = value;
             }
         }
 

@@ -33,6 +33,6 @@ namespace Common_Project.DistributedServices
 		bool GeoEntityWrite(GeoRecord gRecord);
 
 		[OperationContract]
-		List<GeoRecord> ReadGeoContent();
+		Dictionary<string, string> ReadGeoContent();
 	}//end IGeographyReq
 }
