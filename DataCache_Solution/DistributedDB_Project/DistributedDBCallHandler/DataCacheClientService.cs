@@ -2,6 +2,7 @@
 using Common_Project.Classes;
 using Common_Project.DistributedServices;
 using DistributedDB_Project.Exceptions.ExceptionAbstraction;
+using DistributedDB_Project.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,10 +16,16 @@ namespace DistributedDB_Project.DistributedDBCallHandler
         private readonly AuditService auditService = new AuditService();
         private readonly ConsumptionService consumptionService = new ConsumptionService();
         private readonly GeographyService geographyService = new GeographyService();
+        private readonly FunctionalService functionalService = new FunctionalService();
 
         public List<ConsumptionRecord> ConsumptionReqPropagate(DSpanGeoReq dSpanGeoReq)
         {
              return consumptionService.HandleGetByCountryAndDatespan(dSpanGeoReq.GName, dSpanGeoReq.From, dSpanGeoReq.Till);
+        }
+
+        public bool Echo()
+        {
+            return functionalService.Echo();
         }
 
         public EUpdateGeoStatus GeoEntityUpdate(string oldID, string newID)

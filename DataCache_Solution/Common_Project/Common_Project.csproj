@@ -49,12 +49,14 @@
     <Compile Include="Classes\GeoRecord.cs" />
     <Compile Include="DistributedServices\IAuditReq.cs" />
     <Compile Include="DistributedServices\IConsumptionReq.cs" />
+    <Compile Include="DistributedServices\IFunctionalReq.cs" />
     <Compile Include="DistributedServices\IDBReq.cs" />
     <Compile Include="DistributedServices\IFileReq.cs" />
     <Compile Include="DistributedServices\IGeographyReq.cs" />
     <Compile Include="Enums\EGeoRecordStatus.cs" />
     <Compile Include="Enums\EPostGeoEntityStatus.cs" />
     <Compile Include="Enums\EUpdateGeoStatus.cs" />
+    <Compile Include="Exceptions\InvalidParamsException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup />

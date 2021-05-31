@@ -643,8 +643,6 @@ public class ConsumptionDAOImpl : IConsumptionDAO
 
                         using (IDbCommand command = connection.CreateCommand())
                         {
-                            command.CommandText = query;
-                            command.Prepare();
 
                             query = "SELECT count(*) " +
                                     "FROM consumption_audited cad LEFT OUTER JOIN consumption_audit ca ON cad.AID = ca.AID " +
@@ -668,9 +666,14 @@ public class ConsumptionDAOImpl : IConsumptionDAO
                                 ExecuteNonQueryCommand(query, connection);
 
 
-                                if (sharedUpdate.DupsAndMisses.ContainsKey(entity.GID) &&
-                                    sharedUpdate.DupsAndMisses[entity.GID].Item2 != null &&
-                                    !sharedUpdate.DupsAndMisses[entity.GID].Item2.Contains(entity.GetHour()))       // Not first
+                                if (!sharedUpdate.DupsAndMisses.ContainsKey(entity.GID))                            // First duplicate
+                                {
+                                    sharedUpdate.DupsAndMisses.Add(entity.GID,
+                                        new Tuple<List<Tuple<int, int>>, List<int>>(new List<Tuple<int, int>>(), new List<int>()));
+                                }
+
+                                //PROBLEMATIC
+                                if (!sharedUpdate.DupsAndMisses[entity.GID].Item2.Contains(entity.GetHour()))        // Record duplicate
                                 {
                                     sharedUpdate.DupsAndMisses[entity.GID].Item1.Add(new Tuple<int, int>(entity.GetHour(), entity.MWh));
                                 }
@@ -910,11 +913,6 @@ public class ConsumptionDAOImpl : IConsumptionDAO
                         {
                             using (IDbCommand command = connection.CreateCommand())
                             {
-                                command.CommandText = query;
-                                command.Prepare();
-
-                                if (Int32.Parse(command.ExecuteScalar().ToString()) == 0)                  
-                                {
                                     query = "SELECT count(*) " +
                                             "FROM consumption_audited cad LEFT OUTER JOIN consumption_audit ca ON cad.AID = ca.AID " +
                                             "WHERE cad.RECID = " + chkVal + " " +
@@ -936,10 +934,14 @@ public class ConsumptionDAOImpl : IConsumptionDAO
                                                  "VALUES({0}, {1}) ", aID, recID);
                                         ExecuteNonQueryCommand(query, connection);
 
+                                        if (!sharedUpdate.DupsAndMisses.ContainsKey(entity.GID))                            // First duplicate
+                                        {
+                                            sharedUpdate.DupsAndMisses.Add(entity.GID,
+                                                new Tuple<List<Tuple<int, int>>, List<int>>(new List<Tuple<int, int>>(), new List<int>()));
+                                        }
 
-                                        if (sharedUpdate.DupsAndMisses.ContainsKey(entity.GID) &&
-                                            sharedUpdate.DupsAndMisses[entity.GID].Item2 != null &&
-                                            !sharedUpdate.DupsAndMisses[entity.GID].Item2.Contains(entity.GetHour()))        // Not first
+                                        //PROBLEMATIC
+                                        if (!sharedUpdate.DupsAndMisses[entity.GID].Item2.Contains(entity.GetHour()))        // Record duplicate
                                         {
                                             sharedUpdate.DupsAndMisses[entity.GID].Item1.Add(new Tuple<int, int>(entity.GetHour(), entity.MWh));
                                         }
@@ -973,7 +975,7 @@ public class ConsumptionDAOImpl : IConsumptionDAO
                                             sharedUpdate.DupsAndMisses[entity.GID].Item2.Remove(entity.GetHour());
                                         }
                                     } 
-                                }
+                               
                             }
                         }
                         else               // First original after misses
@@ -1031,6 +1033,7 @@ public class ConsumptionDAOImpl : IConsumptionDAO
                 }
             }
         }
+    
     }
 
     public ConsumptionUpdate StoreConsumption(List<ConsumptionRecord> consumptionRecords)

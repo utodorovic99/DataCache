@@ -6,7 +6,9 @@
 //  Original author: Ugljesa
 ///////////////////////////////////////////////////////////
 
+using CacheControler_Project.Enums;
 using Common_Project.Classes;
+using ConnectionControler_Project.Exceptions;
 using FileControler_Project.Enums;
 using System;
 using System.Collections.Generic;
@@ -29,7 +31,52 @@ namespace UIEmulator
             Console.WriteLine("Press any key to continue...");
             Console.ReadKey(true);
             Console.WriteLine();
+
             UI ui = new UI();
+            if (!ui.DBOnline) Console.WriteLine("DB Offline try reconnect or call support");
+
+            WriteGeoAll(ui.GetGeographicEntities());                                    // Read geo all
+            Console.WriteLine();
+            WriteAuditAll(ui.GetAuditEntities());                                       // Read audit all
+            Console.WriteLine();
+            Console.WriteLine("Press any key to continue...");
+            Console.ReadKey(true);
+
+            string fileName = "ostv_2018_05_07.xml";                                    // Load regular file
+            string fileLoadPath = Path.GetFullPath(fileName);
+
+
+            //Fail, if DB Console App is not started
+            try
+            {
+                ParseDBWriteResult(ui.InitFileLoad(fileLoadPath, ELoadDataType.Consumption));
+            }
+            catch (DBOfflineException dbe)
+            {
+                Console.WriteLine("Error:\t" + dbe.Message);
+            }
+            Console.ReadKey(true);
+
+            //Start DB console app and then try
+            if (ui.DBReconnect()) Console.WriteLine("Reconnecting succesfull");
+            else                  Console.WriteLine("Reconnect failed");
+
+            WriteGeoAll(ui.GetGeographicEntities());                                    // Read geo all (initial state)
+            Console.WriteLine();
+            WriteAuditAll(ui.GetAuditEntities());                                       // Read audit all (initial state)
+            Console.WriteLine();
+            Console.WriteLine("Press any key to continue...");
+            Console.ReadKey(true);
+            try
+            {
+                ParseDBWriteResult(ui.InitFileLoad(fileLoadPath, ELoadDataType.Consumption));
+            }
+            catch (DBOfflineException dbe)
+            {
+                Console.WriteLine("Error:\t" + dbe.Message);
+            }
+            Console.ReadKey(true);
+
 
             WriteGeoAll(ui.GetGeographicEntities());
             Console.WriteLine();
@@ -37,9 +84,10 @@ namespace UIEmulator
             Console.WriteLine();
             Console.WriteLine("Press any key to continue...");
             Console.ReadKey(true);
+            Console.WriteLine();
 
-            string fileName = "ostv_2018_05_07.xml";
-            string fileLoadPath = Path.GetFullPath(fileName);   // Emulating client path delivery
+            fileName = "ostv_2018_05_08.xml";                                           // Load file with audit
+            fileLoadPath = Path.GetFullPath(fileName);          
             ParseDBWriteResult(ui.InitFileLoad(fileLoadPath, ELoadDataType.Consumption));
             WriteGeoAll(ui.GetGeographicEntities());
             Console.WriteLine();
@@ -49,48 +97,83 @@ namespace UIEmulator
             Console.ReadKey(true);
             Console.WriteLine();
 
-            fileName = "ostv_2018_05_08.xml";
-            fileLoadPath = Path.GetFullPath(fileName);          // Emulating client path delivery
-            ParseDBWriteResult(ui.InitFileLoad(fileLoadPath, ELoadDataType.Consumption));
-            WriteGeoAll(ui.GetGeographicEntities());
-            Console.WriteLine();
-            WriteAuditAll(ui.GetAuditEntities());
-            Console.WriteLine();
-            Console.WriteLine("Press any key to continue...");
-            Console.ReadKey(true);
-            Console.WriteLine();
-
-            ui.PostGeoEntitiy(new GeoRecord("223", "SOMALIA"));
+            try
+            {
+                ui.PostGeoEntitiy(new GeoRecord("223", "SOMALIA"));                         // Insert geo
+            }
+            catch (DBOfflineException dbe)
+            {
+                Console.WriteLine("Error:\t" + dbe.Message);
+            }
+   
             WriteGeoAll(ui.GetGeographicEntities());
             Console.WriteLine();
             Console.WriteLine("Press any key to continue...");
             Console.ReadKey(true);
             Console.WriteLine();
 
-            ui.UpdateGeoEntity("SOMALIA", "SOM");
+            try
+            {
+                ui.UpdateGeoEntity("SOMALIA", "SOM");           // Editing geo
+            }
+            catch (DBOfflineException dbe)
+            {
+                Console.WriteLine("Error:\t" + dbe.Message);
+            }
+
+                                                    
             WriteGeoAll(ui.GetGeographicEntities());
             Console.WriteLine();
             Console.WriteLine("Press any key to continue...");
             Console.ReadKey(true);
             Console.WriteLine();
 
-            DSpanGeoReq req = new DSpanGeoReq("SRB", "2018-05-08", "2021-12-31");
-            PrintSearchResult(req, ui.InitConsumptionRead(req).Item2);
+            DSpanGeoReq req = new DSpanGeoReq("SRB", "2018-05-08", "2021-12-31");       // Read interval
+            var search_1_result = ui.InitConsumptionRead(req);
+            if (search_1_result.Item1 == EConcumptionReadStatus.DBReadFailed)
+                Console.WriteLine("DB offline...");
+            else
+            {
+                if (search_1_result.Item1 == EConcumptionReadStatus.CacheReadSuccess) 
+                     Console.Write("\t<<< CACHE HIT >>>");
+                else Console.Write("\t<<< DB READ >>>");
+
+                PrintSearchResult(req, search_1_result.Item2);
+            }
+            
             Console.WriteLine("Press any key to continue...");
             Console.ReadKey(true);
             Console.WriteLine();
 
-            DSpanGeoReq req2 = new DSpanGeoReq("SRB", "2021-01-01", "2021-12-31");
-            PrintSearchResult(req, ui.InitConsumptionRead(req2).Item2);
+            DSpanGeoReq req2 = new DSpanGeoReq("SRB", "2021-01-01", "2021-12-31");      // Read sub-interval
+            var search_2_result = ui.InitConsumptionRead(req2);
+            if (search_2_result.Item1 == EConcumptionReadStatus.DBReadFailed)
+                Console.WriteLine("DB offline...");
+            else
+            {
+                if (search_2_result.Item1 == EConcumptionReadStatus.CacheReadSuccess)
+                    Console.Write("\t<<< CACHE HIT >>>");
+                else Console.Write("\t<<< DB READ >>>");
+
+                PrintSearchResult(req2, search_2_result.Item2);
+            }
+
             Console.WriteLine("Press any key to continue...");
             Console.ReadKey(true);
             Console.WriteLine();
 
-            DSpanGeoReq req3 = new DSpanGeoReq("SRB", "2018-05-08", "2018-12-31");
-            PrintSearchResult(req, ui.InitConsumptionRead(req3).Item2);
-            Console.WriteLine("Press any key to continue...");
-            Console.ReadKey(true);
-            Console.WriteLine();
+            DSpanGeoReq req3 = new DSpanGeoReq("SRB", "2018-05-08", "2018-12-31");       // Read sub-interval
+            var search_3_result = ui.InitConsumptionRead(req3);
+            if (search_3_result.Item1 == EConcumptionReadStatus.DBReadFailed)
+                Console.WriteLine("DB offline...");
+            else
+            {
+                if (search_3_result.Item1 == EConcumptionReadStatus.CacheReadSuccess)
+                    Console.Write("\t<<< CACHE HIT >>>");
+                else Console.Write("\t<<< DB READ >>>");
+
+                PrintSearchResult(req3, search_3_result.Item2);
+            }
 
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey(true);
@@ -99,6 +182,7 @@ namespace UIEmulator
 
         private static void PrintSearchResult(DSpanGeoReq req, List<ConsumptionRecord> records)
         {
+
             Console.WriteLine(Environment.NewLine + req);
             Console.WriteLine();
             int loc = 0;

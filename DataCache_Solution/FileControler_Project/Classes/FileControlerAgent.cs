@@ -1,6 +1,7 @@
 ﻿using Common_Project.Classes;
 using Common_Project.DistributedServices;
 using ConnectionControler_Project.Classes;
+using ConnectionControler_Project.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,20 +16,15 @@ namespace FileControler_Project.Classes
 
         public FileControlerAgent()
         {
-            connectionControler = new ConnectionControler();
+            connectionControler = ConnectionControler.Instance;
         }
 
         public ConsumptionUpdate OstvConsumptionDBWrite(List<ConsumptionRecord> cRecords)
         {
-            try
-            {
-                return connectionControler.OstvConsumptionDBWrite(cRecords);
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
-
+            return connectionControler.OstvConsumptionDBWrite(cRecords);
         }
+
+        public bool TryReconnect() { return connectionControler.TryReconnect(); }
+
     }
 }

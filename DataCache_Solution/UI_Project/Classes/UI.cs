@@ -18,6 +18,8 @@ using FileControler_Project.Classes;
 
 using Common_Project.DistributedServices;
 using System.Linq;
+using UI_Project.ClientServices;
+using ConnectionControler_Project.Classes;
 
 namespace UI_Project.Classes
 {
@@ -26,16 +28,29 @@ namespace UI_Project.Classes
 
         private CacheControler m_CacheControler;
         private FileControler m_FileControler;
+        private IFunctionalReq m_ConnectionControler;
 
         public UI()
         {
             m_CacheControler = new CacheControler();
             m_FileControler = new FileControler();
+            m_ConnectionControler = ConnectionControler.Instance as IFunctionalReq;
         }
 
         ~UI()
         {
 
+        }
+
+        public bool DBOnline { get { return m_CacheControler.DBOnline; } }
+        public bool DBReconnect()
+        {
+            return m_CacheControler.DBTryReconnect();
+        }
+
+        public bool Echo()
+        {
+            return m_ConnectionControler.Echo();
         }
 
         public List<AuditRecord> GetAuditEntities()

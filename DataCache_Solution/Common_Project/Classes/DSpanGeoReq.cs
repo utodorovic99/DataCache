@@ -70,6 +70,11 @@ namespace Common_Project.Classes
             }
         }
 
+        public bool IsComplete()
+        {
+            return this.from!="" && this.till!="" && this.gName!= "";
+        }
+
         public override string ToString()
         {
             return String.Format("Search request From:\t{0} \tTill:\t{1} \tfor area:\t{2}", from, till, GName);

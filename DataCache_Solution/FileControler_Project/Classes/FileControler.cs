@@ -16,6 +16,8 @@ using FileControler_Project.Services;
 using Common_Project.Classes;
 using FileControler_Project.Enums;
 using FileControler_Project.Handlers.XMLHandler.Classes;
+using ConnectionControler_Project.Exceptions;
+using System.ServiceModel;
 
 namespace FileControler_Project.Classes
 {
@@ -25,20 +27,29 @@ namespace FileControler_Project.Classes
         private FileControlerAgent m_ConnectionControler;
         private XMLHandler m_XMLHandler;
         Dictionary<string, ELoadDataType> supportedTypes;
-
+        private bool dbOnline;
 
         public FileControler()
         {
-            m_ConnectionControler = new FileControlerAgent();
             m_XMLHandler = new XMLHandler();
 
             supportedTypes = new Dictionary<string, ELoadDataType>();
             supportedTypes["ostv"] = ELoadDataType.Consumption;
+            m_ConnectionControler = new FileControlerAgent();
+            m_ConnectionControler.TryReconnect();
         }
 
         ~FileControler()
         {
 
+        }
+
+        public bool DbOnline { get => dbOnline; }
+
+        public bool DBTryReconnect()
+        {
+            
+           return (dbOnline = m_ConnectionControler.TryReconnect());
         }
 
         //// Method originates from distributed DB, placed here for testing purposes only, reloacate it later
@@ -55,7 +66,7 @@ namespace FileControler_Project.Classes
         //        { 
         //            retVal.NewGeos.Add(currConsumprionRecord.GID);
         //        }
-                
+
         //        if(currConsumprionRecord.MWh==-1)   // Handle miss           
         //        {
         //            tmpHour = currConsumprionRecord.GetHour();
@@ -110,9 +121,9 @@ namespace FileControler_Project.Classes
                 ConsumptionUpdate update = m_ConnectionControler.OstvConsumptionDBWrite(consumptionRecord);
                 return new Tuple<EFileLoadStatus, ConsumptionUpdate>(EFileLoadStatus.Success, update);
             }
-            catch
+            catch (DBOfflineException)
             {
-                return new Tuple<EFileLoadStatus, ConsumptionUpdate>(EFileLoadStatus.DBWriteFailed,  new ConsumptionUpdate());    // Risky
+                return new Tuple<EFileLoadStatus, ConsumptionUpdate>(EFileLoadStatus.DBWriteFailed,  new ConsumptionUpdate());    
             }
             
        
@@ -122,27 +133,12 @@ namespace FileControler_Project.Classes
         /// <param name="path"></param>
         private Tuple<EFileLoadStatus, ConsumptionUpdate> LoadOstvConsumptionStoreDB(FileInfo fileInfo)
         {
-            Tuple<EFileLoadStatus, ConsumptionUpdate> retVal;
-
             // Add new extension handler here
             switch (fileInfo.Extension)         // Wich handler to call?
             {
                 case ".xml":
                     {
                         var loaded = m_XMLHandler.XMLOstvConsumptionRead(fileInfo);
-                        retVal = new Tuple<EFileLoadStatus, ConsumptionUpdate>(loaded.Item1, null);
-                        ////////////////////////////////////////////////////////////////////////////////////////////////////
-                        //// For testing purposes																			//
-                        //Console.WriteLine("\r\n++++++++++ LOADED XML ELEMENTS +++++++++++\n\r");                        //
-                        //if (loaded.Item1 != EFileLoadStatus.Success) Console.WriteLine(loaded.Item1.ToString());        //
-                        //else                                                                                            //
-                        //{                                                                                               //
-                        //    foreach (var el in loaded.Item2) Console.WriteLine(el);                                     //																							
-                        //}                                                                                               //
-                        //Console.WriteLine("\r\n++++++++++++++++++++++++++++++++++++++++++\n\r");                        //
-                        //                                                                                                //                                                                                                
-                        ////////////////////////////////////////////////////////////////////////////////////////////////////
-                       
                         return this.InitDBConsumptionWrite(loaded.Item2);  // Write loaded content to distributed DB
                     }
                 default:
@@ -160,13 +156,14 @@ namespace FileControler_Project.Classes
 
             switch (type)                        // //Place to add new supported types in future
             {
-                case ELoadDataType.Consumption: // ostv cannot be in future
+                case ELoadDataType.Consumption:  // ostv cannot be in future
                     {
                         if (testDateTime <= DateTime.Now) return true;
                         return false;
                     }
-                default: { return false; }
+                case ELoadDataType.Orphan: { return true; }
             }
+            return false;
 
         }
 
@@ -179,30 +176,33 @@ namespace FileControler_Project.Classes
             FileInfo fileInfo = new FileInfo(path);
             char[] splitWordsBy = "_.".ToArray();
             string[] splitParts = fileInfo.Name.Split(splitWordsBy, StringSplitOptions.RemoveEmptyEntries);
-            string timeStampBase = splitParts[1]+"-"+splitParts[2]+"-"+splitParts[3];
+            string timeStampBase = splitParts[1] + "-" + splitParts[2] + "-" + splitParts[3];
 
-            if (supportedTypes.ContainsKey(splitParts[0]) &&
-                supportedTypes[splitParts[0]] == dataType &&                // Is valid data type? (ostv)
-                IsValidDate(splitParts[1], splitParts[2], splitParts[3], dataType)) // Is valid date	
+            if (!IsValidDate(splitParts[1], splitParts[2], splitParts[3], dataType))
+                return new Tuple<string, Tuple<EFileLoadStatus, ConsumptionUpdate>>
+                            ("", new Tuple<EFileLoadStatus, ConsumptionUpdate>
+                            (EFileLoadStatus.InvalidDateTime, new ConsumptionUpdate()));
+
+
+            if (!supportedTypes.ContainsKey(splitParts[0]))
+                return new Tuple<string, Tuple<EFileLoadStatus, ConsumptionUpdate>>
+                            (timeStampBase, new Tuple<EFileLoadStatus, ConsumptionUpdate>
+                            (EFileLoadStatus.FileTypeNotSupported, new ConsumptionUpdate()));
+
+            switch (dataType)
             {
-                switch (dataType)
-                {
-                    //Place to add new supported types in future
-                    case ELoadDataType.Consumption:
-                        {
-                            return new Tuple<string, Tuple<EFileLoadStatus, ConsumptionUpdate>>
-                                (timeStampBase, LoadOstvConsumptionStoreDB(fileInfo));
-                        }
-                    default:
-                        {
-                            break;
-                        }
-                }
+                //Place to add new supported types in future
+                case ELoadDataType.Consumption:
+                    {
+                        return new Tuple<string, Tuple<EFileLoadStatus, ConsumptionUpdate>>
+                            (timeStampBase, LoadOstvConsumptionStoreDB(fileInfo));
+                    }
             }
 
             return new Tuple<string, Tuple<EFileLoadStatus, ConsumptionUpdate>>
-                (timeStampBase, new Tuple<EFileLoadStatus, ConsumptionUpdate>
-                (EFileLoadStatus.FileTypeNotSupported, new ConsumptionUpdate()));// Avoiding null as retVal
+            (timeStampBase, new Tuple<EFileLoadStatus, ConsumptionUpdate>
+            (EFileLoadStatus.WrongFileTypeSeleceted, new ConsumptionUpdate()));
+
         }
 
     }//end FileControler

@@ -7,21 +7,28 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UI_Project.ClientServices;
 
 namespace CacheControler_Project.Classes
 {
-    public class CacheControlerAgent : IConsumptionReq, IAuditReq, IGeographyReq
+    public class CacheControlerAgent : IConsumptionReq, IAuditReq, IGeographyReq, IFunctionalReq
     {
         private ConnectionControler connectionControler;
 
+        public bool TryReconnect() { return connectionControler.TryReconnect(); }
         public CacheControlerAgent()
         {
-            connectionControler = new ConnectionControler();
+            connectionControler = ConnectionControler.Instance;
         }
 
         public List<ConsumptionRecord> ConsumptionReqPropagate(DSpanGeoReq dSpanGeoReq)
         {
             return connectionControler.ConsumptionReqPropagate(dSpanGeoReq);
+        }
+
+        public bool Echo()
+        {
+            return connectionControler.Echo();
         }
 
         public EUpdateGeoStatus GeoEntityUpdate(string oldName, string newName)

@@ -61,7 +61,8 @@ namespace Common_Project.Classes
             }
         }
 
-        public bool IsEmpty() { return gName == "" && gID == ""; }
+        public bool IsEmpty()     { return gName == "" && gID == ""; }
+        public bool IsComplete()  { return gName!="" && gID!="";   }
         public override string ToString()
         {
             return string.Format("Geographic entity: GID: {0}\tName: {1}", gID, gName);

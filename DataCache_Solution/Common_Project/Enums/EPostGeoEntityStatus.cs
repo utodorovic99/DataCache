@@ -18,7 +18,8 @@ namespace CacheControler_Project.Enums
 
         Success,
         DBWriteFailed,
-        DBWriteAborted
+        DBWriteAborted,
+        OutOfMemory,
 
     }//end EPostGeoEntityStatus
 }

@@ -33,6 +33,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.ServiceModel" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -51,6 +52,10 @@
     <Compile Include="Services\IFControlerOps.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\CacheControler_Project\CacheControler_Project.csproj">
+      <Project>{112958ef-61db-44c8-ac8e-12fe8fb39ba3}</Project>
+      <Name>CacheControler_Project</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Common_Project\Common_Project.csproj">
       <Project>{e2217c16-faf1-40e4-8543-e0d484694c09}</Project>
       <Name>Common_Project</Name>
@@ -58,6 +63,10 @@
     <ProjectReference Include="..\ConnectionControler_Project\ConnectionControler_Project.csproj">
       <Project>{f540e98b-2395-4b15-87a7-d1790e20f17f}</Project>
       <Name>ConnectionControler_Project</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\DistributedDB_Project\DistributedDB_Project.csproj">
+      <Project>{561eb8dd-8a65-4291-871a-89f8944f79d7}</Project>
+      <Name>DistributedDB_Project</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup />

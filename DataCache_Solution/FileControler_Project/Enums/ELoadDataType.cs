@@ -8,6 +8,7 @@ namespace FileControler_Project.Enums
 {
     public enum ELoadDataType:int
     {
-        Consumption
+        Consumption,
+        Orphan          //For testing purposes, not mapped to any user call.
     }
 }

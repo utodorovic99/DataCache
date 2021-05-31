@@ -1,0 +1,144 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{A9A5F638-F632-4A77-9629-30272DE61B7D}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>FileControler_ProjectTest</RootNamespace>
+    <AssemblyName>FileControler_ProjectTest</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Castle.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc, processorArchitecture=MSIL">
+      <HintPath>..\packages\Castle.Core.4.4.0\lib\net45\Castle.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Moq, Version=4.16.0.0, Culture=neutral, PublicKeyToken=69f491c39445e920, processorArchitecture=MSIL">
+      <HintPath>..\packages\Moq.4.16.1\lib\net45\Moq.dll</HintPath>
+    </Reference>
+    <Reference Include="nunit.core, Version=2.6.4.14350, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
+      <HintPath>..\packages\NUnitTestAdapter.WithFramework.2.0.0\lib\nunit.core.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="nunit.core.interfaces, Version=2.6.4.14350, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
+      <HintPath>..\packages\NUnitTestAdapter.WithFramework.2.0.0\lib\nunit.core.interfaces.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="nunit.framework, Version=2.7.1.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
+      <HintPath>..\packages\NUnit.2.7.1\lib\nunit.framework.dll</HintPath>
+    </Reference>
+    <Reference Include="nunit.util, Version=2.6.4.14350, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
+      <HintPath>..\packages\NUnitTestAdapter.WithFramework.2.0.0\lib\nunit.util.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="NUnit.VisualStudio.TestAdapter, Version=2.0.0.0, Culture=neutral, PublicKeyToken=4cb40d35494691ac, processorArchitecture=MSIL">
+      <HintPath>..\packages\NUnitTestAdapter.WithFramework.2.0.0\lib\NUnit.VisualStudio.TestAdapter.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.4.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.4.5.3\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ClassesTest\FileControlerAgentTest.cs" />
+    <Compile Include="ClassesTest\FileControlerTest.cs" />
+    <Compile Include="HandlersTest\XMLHandlerTest.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="EnumsTest\" />
+    <Folder Include="ServicesTest\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CacheControler_Project\CacheControler_Project.csproj">
+      <Project>{112958ef-61db-44c8-ac8e-12fe8fb39ba3}</Project>
+      <Name>CacheControler_Project</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Common_Project\Common_Project.csproj">
+      <Project>{e2217c16-faf1-40e4-8543-e0d484694c09}</Project>
+      <Name>Common_Project</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ConnectionControler_ProjectTest\ConnectionControler_ProjectTest.csproj">
+      <Project>{B1DBB796-AE2C-4252-8CE6-CDFAD77F849D}</Project>
+      <Name>ConnectionControler_ProjectTest</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ConnectionControler_Project\ConnectionControler_Project.csproj">
+      <Project>{f540e98b-2395-4b15-87a7-d1790e20f17f}</Project>
+      <Name>ConnectionControler_Project</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\DistributedDB_Project\DistributedDB_Project.csproj">
+      <Project>{561eb8dd-8a65-4291-871a-89f8944f79d7}</Project>
+      <Name>DistributedDB_Project</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\FileControler_Project\FileControler_Project.csproj">
+      <Project>{8963EA46-7D58-4D9A-9B6E-1D65A844A1C3}</Project>
+      <Name>FileControler_Project</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\GUI_Integrator_Project\GUI_Integrator_Project.csproj">
+      <Project>{bd6e1e9a-cfb7-4caa-8931-30c068a75128}</Project>
+      <Name>GUI_Integrator_Project</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\UIEmulator\UIEmulator.csproj">
+      <Project>{b448f86d-277c-4f8d-9fb1-df6aa3573b08}</Project>
+      <Name>UIEmulator</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\UI_Project\UI_Project.csproj">
+      <Project>{91b02427-273e-4b20-8983-2718eeebde35}</Project>
+      <Name>UI_Project</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <CodeAnalysisDictionary Include="TestXMLs\ostv_2018_05_07.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </CodeAnalysisDictionary>
+    <CodeAnalysisDictionary Include="TestXMLs\ostv_2018_05_08.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </CodeAnalysisDictionary>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="TestXMLs\bad_convention_example.xml" />
+    <Content Include="TestXMLs\ostv_2018_05_09.xml" />
+    <Content Include="TestXMLs\ostv_2018_05_10.xml" />
+    <Content Include="TestXMLs\ostv_2018_05_11.xml" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

@@ -15,100 +15,253 @@ using Common_Project.DistributedServices;
 using CacheControler_Project.Enums;
 using System.ServiceModel;
 using System.Diagnostics;
+using ConnectionControler_Project.Exceptions;
+using Common_Project.Exceptions;
 
 namespace ConnectionControler_Project.Classes
 {
-    public class ConnectionControler : IDBReq
+    public class ConnectionControler :IDBReq
     {
-        ChannelFactory<Common_Project.DistributedServices.IDBReq> consumptionChannel;
-        IDBReq proxy;
-
-        public ConnectionControler()
+        private static ChannelFactory<Common_Project.DistributedServices.IDBReq> consumptionChannel;
+        private static IDBReq proxy=null;
+        private static bool activityState;
+        private static ConnectionControler singletoneInstance=null;
+        private static readonly object singletoneMtx = new object();
+        
+        public static ConnectionControler Instance
         {
-           consumptionChannel = new ChannelFactory<Common_Project.DistributedServices.IDBReq>("DataCacheClientService");
-           proxy = consumptionChannel.CreateChannel();
+            get
+            {
+                lock(singletoneMtx)
+                {
+                    if (singletoneInstance == null)
+                    {
+                        singletoneInstance = new ConnectionControler();
+                    }
+                }
+                return singletoneInstance;
+            }
+        }
+
+        public static bool ActivityState { get => activityState; set => activityState = value; }
+
+        private ConnectionControler()
+        {  
+            activityState = false;
+            try
+            {
+                consumptionChannel = new ChannelFactory<Common_Project.DistributedServices.IDBReq>("DataCacheClientService");
+                proxy = consumptionChannel.CreateChannel();
+                activityState = true;
+            }
+            catch (InvalidOperationException)           { activityState = false; }
+            catch (EndpointNotFoundException)
+                                                        { activityState = false; }
+            catch (CommunicationObjectFaultedException)
+                                                        { activityState = false; }
+
+        }
+
+        public bool TryReconnect()
+        {
+            activityState = false;
+            try
+            {
+                consumptionChannel = new ChannelFactory<Common_Project.DistributedServices.IDBReq>("DataCacheClientService");
+                proxy = consumptionChannel.CreateChannel();
+                proxy.Echo();
+                activityState = true;
+            }
+            catch (EndpointNotFoundException)
+            {
+                activityState = false;
+
+            }
+            catch (CommunicationObjectFaultedException)
+            {
+                activityState = false;
+            }
+            catch (System.InvalidOperationException) { activityState = false; }
+            return activityState;
         }
 
         ~ConnectionControler()
         {
         }
+        public bool Echo()
+        {
+            try
+            {
+                activityState = true;
+                return proxy.Echo();
+            }
+            catch (EndpointNotFoundException)
+            {
+                activityState = false;
+                throw new DBOfflineException("Remote Database is currently offline, check network connection and call support.");
+            }
+            catch (CommunicationObjectFaultedException)
+            {
+                activityState = false;
+                throw new DBOfflineException("Remote Database is currently offline, check network connection and call support.");
+            }
 
+        }
         public ConsumptionUpdate OstvConsumptionDBWrite(List<ConsumptionRecord> cRecords)
         {
-            //try
-            //{
-                return proxy.OstvConsumptionDBWrite(cRecords);
-            //}
-            //catch(Exception e)
-            //{
-                //Trace.WriteLine(e.ToString());  // Later throw custom exception or catch on other component
-            //}
-            //return new ConsumptionUpdate();
+            if(proxy==null)
+            {
+                if(!TryReconnect()) throw new DBOfflineException("Remote Database is currently offline, check network connection and call support.");
+            }
+        
+
+            if (cRecords == null || cRecords.Count == 0) return new ConsumptionUpdate();
+
+            try 
+            {
+                activityState = true;
+                return proxy.OstvConsumptionDBWrite(cRecords); 
+            }
+            catch(CommunicationObjectFaultedException)
+            {
+                activityState = false;
+                throw new DBOfflineException("Remote Database is currently offline, check network connection and call support.");
+            }
+            catch (EndpointNotFoundException)
+            {
+                activityState = false;
+                throw new DBOfflineException("Remote Database is currently offline, check network connection and call support.");
+            }
         }
 
         public List<ConsumptionRecord> ConsumptionReqPropagate(DSpanGeoReq dSpanGeoReq)
         {
+            if (proxy == null)
+            {
+                if (!TryReconnect()) throw new DBOfflineException("Remote Database is currently offline, check network connection and call support.");
+            }
+
+            if (dSpanGeoReq == null)        throw new InvalidParamsException("Empty request sent");
+            if (!dSpanGeoReq.IsComplete())  throw new InvalidParamsException("Incompleted request");
+
             try
             {
+                activityState = true;
                 return proxy.ConsumptionReqPropagate(dSpanGeoReq);
             }
-            catch (Exception e)
+            catch (CommunicationObjectFaultedException)
             {
-                Trace.WriteLine(e.ToString());  // Later throw custom exception or catch on other component
+                activityState = false;
+                throw new DBOfflineException("Remote Database is currently offline, check network connection and call support.");
             }
-            return new List<ConsumptionRecord>();
+            catch (EndpointNotFoundException)
+            {
+                activityState = false;
+                throw new DBOfflineException("Remote Database is currently offline, check network connection and call support.");
+            }
         }
 
         public List<AuditRecord> ReadAuditContnet()
         {
+            if (proxy == null)
+            {
+                if (!TryReconnect()) throw new DBOfflineException("Remote Database is currently offline, check network connection and call support.");
+            }
+
             try
             {
+                activityState = true;
                 return proxy.ReadAuditContnet();
             }
-            catch(Exception e)
+            catch (CommunicationObjectFaultedException)
             {
-                Trace.WriteLine(e.ToString()); // Later throw custom exception or catch on other component
+                activityState = false;
+                throw new DBOfflineException("Remote Database is currently offline, check network connection and call support.");
             }
-            return new List<AuditRecord>();     
+            catch (EndpointNotFoundException)
+            {
+                activityState = false;
+                throw new DBOfflineException("Remote Database is currently offline, check network connection and call support.");
+            }
+
         }
 
         public EUpdateGeoStatus GeoEntityUpdate(string oldName, string newName)
         {
+            if (proxy == null)
+            {
+                if (!TryReconnect()) throw new DBOfflineException("Remote Database is currently offline, check network connection and call support.");
+            }
+
+            if (oldName == "" || newName == "") throw new InvalidParamsException("Empty param detected");
+            if (oldName == newName) return EUpdateGeoStatus.ReqAborted;
+
             try
             {
+                activityState = true;
                 return proxy.GeoEntityUpdate(oldName, newName);
             }
-            catch(Exception e)
+            catch (CommunicationObjectFaultedException)
             {
-                Trace.WriteLine(e.ToString());  // Later throw custom exception or catch on other component
+                activityState = false;
+                return EUpdateGeoStatus.DBWriteFailed;
             }
-            return EUpdateGeoStatus.DBWriteFailed;
+            catch (EndpointNotFoundException)
+            {
+                activityState = false;
+                return EUpdateGeoStatus.DBWriteFailed;
+            }
+
         }
 
         public bool GeoEntityWrite(GeoRecord gRecord)
         {
+            if (proxy == null)
+            {
+                if (!TryReconnect()) throw new DBOfflineException("Remote Database is currently offline, check network connection and call support.");
+            }
+
+            if (gRecord == null || !gRecord.IsComplete()) return false;
+
             try
             {
+                activityState = true;
                 return proxy.GeoEntityWrite(gRecord);
             }
-            catch(Exception e)
+            catch (CommunicationObjectFaultedException)
             {
-                Trace.WriteLine(e.ToString()); // Later throw custom exception or catch on other component
+                activityState = false;
+                throw new DBOfflineException("Remote Database is currently offline, check network connection and call support.");
             }
-            return false;
+            catch (EndpointNotFoundException)
+            {
+                activityState = false;
+                throw new DBOfflineException("Remote Database is currently offline, check network connection and call support.");
+            }
         }
 
         public Dictionary<string, string> ReadGeoContent()
         {
+            if (proxy == null)
+            {
+                if (!TryReconnect()) throw new DBOfflineException("Remote Database is currently offline, check network connection and call support.");
+            }
+
             try
             {
+                activityState = true;
                 return proxy.ReadGeoContent();
             }
-            catch(Exception e)
+            catch (CommunicationObjectFaultedException)
             {
-                Trace.WriteLine(e.ToString());  // Later throw custom exception or catch on other component
+                activityState = false;
+                throw new DBOfflineException("Remote Database is currently offline, check network connection and call support.");
             }
-            return new Dictionary<string, string>();
+            catch (EndpointNotFoundException)
+            {
+                activityState = false;
+                throw new DBOfflineException("Remote Database is currently offline, check network connection and call support.");
+            }
         }
     }//end ConnectionControler
 }

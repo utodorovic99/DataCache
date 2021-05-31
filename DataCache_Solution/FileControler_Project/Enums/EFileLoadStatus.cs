@@ -18,12 +18,14 @@ namespace FileControler_Project.Enums
     {
         Success,
         FileTypeNotSupported,
+        WrongFileTypeSeleceted,
         PartialReadSuccess,
         InvalidFileStructure,
         OpeningFailed,
         DBWriteFailed,
         Failed,
         InvalidFileExtension,
-        InvalidDateTime
+        InvalidDateTime,
+        FileNameConventionViolated
     }
 }

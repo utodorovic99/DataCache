@@ -58,6 +58,10 @@
       <Project>{E2217C16-FAF1-40E4-8543-E0D484694C09}</Project>
       <Name>Common_Project</Name>
     </ProjectReference>
+    <ProjectReference Include="..\ConnectionControler_Project\ConnectionControler_Project.csproj">
+      <Project>{F540E98B-2395-4B15-87A7-D1790E20F17F}</Project>
+      <Name>ConnectionControler_Project</Name>
+    </ProjectReference>
     <ProjectReference Include="..\FileControler_Project\FileControler_Project.csproj">
       <Project>{8963EA46-7D58-4D9A-9B6E-1D65A844A1C3}</Project>
       <Name>FileControler_Project</Name>

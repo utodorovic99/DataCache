@@ -13,11 +13,11 @@ using System.IO;
 using CacheControler_Project.Enums;
 using Common_Project.Classes;
 using FileControler_Project.Enums;
-
+using UI_Project.ClientServices;
 
 namespace UI_Project.Classes
 {
-    public interface IUIOps
+    public interface IUIOps:IFunctionalReq
     {
 
         List<AuditRecord> GetAuditEntities();
@@ -39,5 +39,8 @@ namespace UI_Project.Classes
         /// 
         /// <param name="name"></param>
         EUpdateGeoStatus UpdateGeoEntity(string oldName, string newName);
+
+        bool DBReconnect();
+
     }//end IUIOps
 }

@@ -12,11 +12,12 @@ using System.Text;
 using System.IO;
 using Common_Project.DistributedServices;
 using System.ServiceModel;
+using UI_Project.ClientServices;
 
 namespace Common_Project.DistributedServices
 {
     [ServiceContract]
-    public interface IDBReq : IAuditReq, IConsumptionReq, IFileReq, IGeographyReq
+    public interface IDBReq : IAuditReq, IConsumptionReq, IFileReq, IGeographyReq, IFunctionalReq
     {
 
     }//end IDBReq

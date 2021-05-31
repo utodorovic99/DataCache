@@ -92,6 +92,11 @@ namespace Common_Project.Classes
             return !(mWh == -1 && gID == "" && timeStamp == "");
         }
 
+        public bool HasUsableStatus()
+        {
+            return (timeStamp != "" && gID != "") || mWh != -1;
+        }
+
         public int GetHour()
         {
             if (timeStamp[timeStamp.Length - 2] == '-') return Int32.Parse(String.Format("{0}", timeStamp[timeStamp.Length - 1]));
@@ -156,8 +161,6 @@ namespace Common_Project.Classes
                 return true;
             else return false;
         }
-
-       
 
     }//end ConsumptionRecord
 }

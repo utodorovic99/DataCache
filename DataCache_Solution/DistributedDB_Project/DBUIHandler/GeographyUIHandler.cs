@@ -76,7 +76,7 @@ namespace DistributedDB_Project.DistributedCallHandler
         private void FormatedPrintOut(Dictionary<string, string> records)
         { 
             foreach (var record in records) 
-                Console.WriteLine("GID: "+record.Value + "\t"+"GNAME: "+record.Key); 
+                Console.WriteLine("GID:\t"+record.Value + "\t"+"GNAME: "+record.Key); 
         }
 
         private void FormatedPrintOut(List<GeoRecord> records )
