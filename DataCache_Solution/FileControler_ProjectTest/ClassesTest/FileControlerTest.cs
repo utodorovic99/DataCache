@@ -55,10 +55,10 @@ namespace FileControler_ProjectTest.ClassesTest
             FileControler fileControler = new FileControler();
             Tuple<string, Tuple<EFileLoadStatus, ConsumptionUpdate>> retVal;
             string path = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.FullName;
-            FileInfo fileInfo = new FileInfo(path + "\\TestXMLs\\notExisting.xml");
+            FileInfo fileInfo = new FileInfo(path + "\\TestXMLs\\ostv_2018_05_07.xml");
 
             //Act
-            retVal = fileControler.LoadFileStoreDB("ostv_2018_05_07.xml", ELoadDataType.Consumption);
+            retVal = fileControler.LoadFileStoreDB(fileInfo.FullName, ELoadDataType.Consumption);
 
             //Assert
             Assert.AreEqual(EFileLoadStatus.DBWriteFailed, retVal.Item2.Item1);
@@ -74,10 +74,10 @@ namespace FileControler_ProjectTest.ClassesTest
             FileControler fileControler = new FileControler();
             Tuple<string, Tuple<EFileLoadStatus, ConsumptionUpdate>> retVal;
             string path = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.FullName;
-            FileInfo fileInfo = new FileInfo(path + "\\TestXMLs\\notExisting.xml");
+            FileInfo fileInfo = new FileInfo(path + "\\TestXMLs\\ostv_2018_05_07.css");
 
             //Act
-            retVal = fileControler.LoadFileStoreDB("ostv_2018_05_07.css", ELoadDataType.Consumption);
+            retVal = fileControler.LoadFileStoreDB(fileInfo.FullName, ELoadDataType.Consumption);
 
             //Assert
             Assert.AreEqual(EFileLoadStatus.InvalidFileExtension, retVal.Item2.Item1);
@@ -93,10 +93,10 @@ namespace FileControler_ProjectTest.ClassesTest
             FileControler fileControler = new FileControler();
             Tuple<string, Tuple<EFileLoadStatus, ConsumptionUpdate>> retVal;
             string path = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.FullName;
-            FileInfo fileInfo = new FileInfo(path + "\\TestXMLs\\notExisting.xml");
+            FileInfo fileInfo = new FileInfo(path + "\\TestXMLs\\exp_2018_05_07.html");
 
             //Act
-            retVal = fileControler.LoadFileStoreDB("exp_2018_05_07.css", ELoadDataType.Consumption);
+            retVal = fileControler.LoadFileStoreDB(fileInfo.FullName, ELoadDataType.Consumption);
 
             //Assert
             Assert.AreEqual(EFileLoadStatus.FileTypeNotSupported, retVal.Item2.Item1);
@@ -113,10 +113,10 @@ namespace FileControler_ProjectTest.ClassesTest
             FileControler fileControler = new FileControler();
             Tuple<string, Tuple<EFileLoadStatus, ConsumptionUpdate>> retVal;
             string path = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.FullName;
-            FileInfo fileInfo = new FileInfo(path + "\\TestXMLs\\notExisting.xml");
+            FileInfo fileInfo = new FileInfo(path + "\\TestXMLs\\ostv_2018_05_07.html");
 
             //Act
-            retVal = fileControler.LoadFileStoreDB("ostv_2018_05_07.css", ELoadDataType.Orphan);
+            retVal = fileControler.LoadFileStoreDB(fileInfo.FullName, ELoadDataType.Orphan);
 
             //Assert
             Assert.AreEqual(EFileLoadStatus.WrongFileTypeSeleceted, retVal.Item2.Item1);
@@ -132,11 +132,12 @@ namespace FileControler_ProjectTest.ClassesTest
             FileControler fileControler = new FileControler();
             Tuple<string, Tuple<EFileLoadStatus, ConsumptionUpdate>> retVal;
             string path = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.FullName;
-            FileInfo fileInfo = new FileInfo(path + "\\TestXMLs\\notExisting.xml");
             var futureTime = DateTime.Now.AddDays(1);
+            FileInfo fileInfo = new FileInfo(path + String.Format("\\TestXMLs\\ostv_{0}_{1}_{2}.xml",
+                futureTime.Year, futureTime.Month, futureTime.Day));
 
             //Act
-            retVal = fileControler.LoadFileStoreDB(String.Format("ostv_{0}_{1}_{2}.xml", 
+            retVal = fileControler.LoadFileStoreDB(String.Format(fileInfo.FullName, 
                 futureTime.Year, futureTime.Month, futureTime.Day), ELoadDataType.Consumption);
 
             //Assert
@@ -153,10 +154,10 @@ namespace FileControler_ProjectTest.ClassesTest
             FileControler fileControler = new FileControler();
             Tuple<string, Tuple<EFileLoadStatus, ConsumptionUpdate>> retVal;
             string path = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.FullName;
-            FileInfo fileInfo = new FileInfo(path + "\\TestXMLs\\notExisting.xml");
+            FileInfo fileInfo = new FileInfo(path + "\\TestXMLs\\exp_2018_01_32.html");
 
             //Act
-            retVal = fileControler.LoadFileStoreDB("exp_2018_01_32.css", ELoadDataType.Consumption);
+            retVal = fileControler.LoadFileStoreDB(fileInfo.FullName, ELoadDataType.Consumption);
 
             //Assert
             Assert.AreEqual(EFileLoadStatus.InvalidDateTime, retVal.Item2.Item1);

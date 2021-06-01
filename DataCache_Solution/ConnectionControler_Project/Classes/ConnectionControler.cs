@@ -109,13 +109,12 @@ namespace ConnectionControler_Project.Classes
         }
         public ConsumptionUpdate OstvConsumptionDBWrite(List<ConsumptionRecord> cRecords)
         {
-            if(proxy==null)
+            if (cRecords == null || cRecords.Count == 0) return new ConsumptionUpdate();
+
+            if (proxy==null)
             {
                 if(!TryReconnect()) throw new DBOfflineException("Remote Database is currently offline, check network connection and call support.");
             }
-        
-
-            if (cRecords == null || cRecords.Count == 0) return new ConsumptionUpdate();
 
             try 
             {

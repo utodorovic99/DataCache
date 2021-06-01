@@ -23,8 +23,10 @@ namespace Common_Project.Classes
 
         public AuditRecord()
         {
-
-        }
+           gID="";
+           timeStamp="";
+           dupVal=-1;
+         }
 
         public AuditRecord(string gID, string timeStamp, int dupVal)
         {

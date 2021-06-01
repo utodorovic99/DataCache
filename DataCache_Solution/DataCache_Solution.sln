@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConnectionControler_Project
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common_ProjectTest", "CommonTest\Common_ProjectTest.csproj", "{FC74A6DC-FDFC-411C-ABF9-B8E7C3ED3A28}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CacheControler_ProjectTest", "CacheControler_ProjectTest\CacheControler_ProjectTest.csproj", "{4A05E347-EE6C-4BE4-BD02-9F8FB127CC81}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -75,6 +77,10 @@ Global
 		{FC74A6DC-FDFC-411C-ABF9-B8E7C3ED3A28}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FC74A6DC-FDFC-411C-ABF9-B8E7C3ED3A28}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FC74A6DC-FDFC-411C-ABF9-B8E7C3ED3A28}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A05E347-EE6C-4BE4-BD02-9F8FB127CC81}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A05E347-EE6C-4BE4-BD02-9F8FB127CC81}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A05E347-EE6C-4BE4-BD02-9F8FB127CC81}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A05E347-EE6C-4BE4-BD02-9F8FB127CC81}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

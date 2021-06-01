@@ -33,26 +33,14 @@ namespace CacheControler_Project.Classes
 
         public List<ConsumptionRecord> CRecord
         {
-            get
-            {
-                return cRecord;
-            }
-            set
-            {
-                cRecord = value;
-            }
+            get { return cRecord;  }
+            set { cRecord = value; }
         }
 
         public DateTime HitTime
         {
-            get
-            {
-                return hitTime;
-            }
-            set
-            {
-                hitTime = value;
-            }
+            get { return hitTime;  }
+            set { hitTime = value; }
         }
 
     }//end CacheHit

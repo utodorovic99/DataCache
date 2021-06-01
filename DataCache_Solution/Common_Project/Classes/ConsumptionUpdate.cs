@@ -34,39 +34,21 @@ namespace Common_Project.Classes
 
         public  Dictionary<string, Tuple<List<Tuple<int, int>>, List<int>>> DupsAndMisses
         {
-            get
-            {
-                return dupsAndMisses;
-            }
-            set
-            {
-                dupsAndMisses = value;
-            }
+            get { return dupsAndMisses;  }
+            set { dupsAndMisses = value; }
         }
 
         public string TimeStampBase
         {
-            get
-            {
-                return timeStampBase;
-            }
+            get { return timeStampBase;  }
 
-            set
-            {
-                timeStampBase = value;
-            }
+            set { timeStampBase = value; }
         }
 
         public List<string> NewGeos
         {
-            get
-            {
-                return newGeos;
-            }
-            set
-            {
-                newGeos = value;
-            }
+            get { return newGeos;  }
+            set { newGeos = value; }
         }
 
         public override string ToString()

@@ -27,21 +27,75 @@ namespace FileControler_ProjectTest.ClassesTest
     public class FileControlerAgentTest
     {
         
+        [Test]
+        public void FileControlerAgent_TestContrictor_ReturnsInstance()
+        {
+            //Act
+            FileControlerAgent controler = new FileControlerAgent();
+            FileControlerAgent controler2 = new FileControlerAgent();
 
-        
+            //Assert
+            Assert.IsNotNull(controler);
+        }
+
+
+
+        [Test]
+        public void OstvConsumptionDBWrite_FakeTryWriteEmptyParam_ReturnsEmptyUpdate()
+        {
+            //Arrange
+            List<ConsumptionRecord> inputParam = new List<ConsumptionRecord>();
+            ConsumptionUpdate retVal;
+
+            //Act
+            retVal=ConnectionControlerTest.FakeOstvConsumptionDBWrite(inputParam);
+
+            //Assert
+            Assert.IsNotNull(retVal);
+            Assert.AreEqual(0, retVal.NewGeos.Count);
+            Assert.AreEqual(0, retVal.DupsAndMisses.Count);
+            Assert.AreEqual("", retVal.TimeStampBase);
+        }
+
+        [Test]
+        public void OstvConsumptionDBWrite_FakeTryWriteNullParam_ReturnsEmptyUpdate()
+        {
+            //Arrange
+            List<ConsumptionRecord> inputParam = null;
+            ConsumptionUpdate retVal;
+
+            //Act
+            retVal = ConnectionControlerTest.FakeOstvConsumptionDBWrite(inputParam);
+
+            //Assert
+            Assert.IsNotNull(retVal);
+            Assert.AreEqual(0, retVal.NewGeos.Count);
+            Assert.AreEqual(0, retVal.DupsAndMisses.Count);
+            Assert.AreEqual("", retVal.TimeStampBase);
+        }
+
 
         [Test]
         public void TryReconnect_Try_FailedDBOffline()
         {
             //Arrange
-            FileControlerAgent controler = new FileControlerAgent();
-            bool result;
+            List<ConsumptionRecord> inputParam = new List<ConsumptionRecord>();
+            inputParam.Add(new ConsumptionRecord());
+            ConsumptionUpdate retVal;
+            ConnectionControlerTest.proxy.Setup(x => x.OstvConsumptionDBWrite(inputParam)).
+                Throws(new CommunicationObjectFaultedException());
 
             //Act
-            result = controler.TryReconnect();
-
-            //Assert
-            Assert.IsFalse(result);
+            try
+            {
+                retVal = ConnectionControlerTest.FakeOstvConsumptionDBWrite(inputParam);
+                Assert.Fail();
+            }
+            catch (DBOfflineException ex) 
+            {
+                Assert.IsFalse(ConnectionControlerTest.ActivityState());
+                Assert.AreEqual("Remote Database is currently offline, check network connection and call support.", ex.Message);
+            }
         }
     }
 }

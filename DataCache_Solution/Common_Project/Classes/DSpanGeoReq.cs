@@ -36,38 +36,20 @@ namespace Common_Project.Classes
 
         public string From
         {
-            get
-            {
-                return from;
-            }
-            set
-            {
-                from = value;
-            }
+            get { return from;  }
+            set { from = value; }
         }
 
         public string GName
         {
-            get
-            {
-                return gName;
-            }
-            set
-            {
-                gName = value;
-            }
+            get { return gName;  }
+            set { gName = value; }
         }
 
         public string Till
         {
-            get
-            {
-                return till;
-            }
-            set
-            {
-                till = value;
-            }
+            get { return till;  }
+            set { till = value; }
         }
 
         public bool IsComplete()

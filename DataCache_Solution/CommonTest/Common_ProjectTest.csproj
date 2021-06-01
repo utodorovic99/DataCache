@@ -64,20 +64,23 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Classes\AuditRecordTest.cs" />
-    <Compile Include="Classes\ConsumptionRecordTest.cs" />
-    <Compile Include="Classes\ConsumptionUpdateTest.cs" />
-    <Compile Include="Classes\DSpanGeoReqTest.cs" />
-    <Compile Include="Classes\GeoRecordTest.cs" />
+    <Compile Include="ClassesTest\AuditRecordTest.cs" />
+    <Compile Include="ClassesTest\ConsumptionRecordTest.cs" />
+    <Compile Include="ClassesTest\ConsumptionUpdateTest.cs" />
+    <Compile Include="ClassesTest\DSpanGeoReqTest.cs" />
+    <Compile Include="ClassesTest\GeoRecordTest.cs" />
     <Compile Include="Exceptions\InvalidParamsExceptionTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="DistributedServices\" />
-    <Folder Include="Enums\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Common_Project\Common_Project.csproj">
+      <Project>{E2217C16-FAF1-40E4-8543-E0D484694C09}</Project>
+      <Name>Common_Project</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

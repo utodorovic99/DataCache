@@ -39,33 +39,21 @@ namespace Common_Project.Classes
 
         public string GID
         {
-            get
-            {
-                return gID;
-            }
-            set
-            {
-                gID = value;
-            }
+            get { return gID;  }
+            set { gID = value; }
         }
 
         public string GName
         {
-            get
-            {
-                return gName;
-            }
-            set
-            {
-                gName = value;
-            }
+            get { return gName;  }
+            set { gName = value; }
         }
 
         public bool IsEmpty()     { return gName == "" && gID == ""; }
-        public bool IsComplete()  { return gName!="" && gID!="";   }
+        public bool IsComplete()  { return gName!="" && gID!="";     }
         public override string ToString()
         {
-            return string.Format("Geographic entity: GID: {0}\tName: {1}", gID, gName);
+            return String.Format("Geographic entity: GID: {0}\tName: {1}", gID, gName);
         }
     }//end GeoRecord
 }

@@ -81,10 +81,7 @@
     <Compile Include="HandlersTest\XMLHandlerTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="EnumsTest\" />
-    <Folder Include="ServicesTest\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
