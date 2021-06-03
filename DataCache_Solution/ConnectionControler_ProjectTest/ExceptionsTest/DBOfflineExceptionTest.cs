@@ -11,6 +11,7 @@ namespace ConnectionControler_ProjectTest.ExceptionsTest
     [TestFixture]
     public class DBOfflineExceptionTest
     {
+        #region Constructor_Tests
         [Test]
         public void DBOfflineException_TryConstructNullParam_ConstructMessageEmpty()
         {
@@ -51,6 +52,7 @@ namespace ConnectionControler_ProjectTest.ExceptionsTest
             //Assert
             Assert.AreEqual(exc.Message, message);
         }
+        #endregion
 
     }
 }

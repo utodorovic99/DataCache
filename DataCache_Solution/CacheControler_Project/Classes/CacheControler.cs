@@ -18,12 +18,14 @@ using Common_Project.DistributedServices;
 using System.Threading;
 using System.Threading.Tasks;
 using ConnectionControler_Project.Exceptions;
+using System.Diagnostics.CodeAnalysis;
 
 namespace CacheControler_Project.Classes
 {
+    [ExcludeFromCodeCoverage]
     public class CacheControler : IConsumptionRead
     {
-        public CacheControlerAgent m_ConnectionControler;
+        private CacheControlerAgent m_ConnectionControler;
 
         private Dictionary<DSpanGeoReq, CacheHit> cachedConsumption;    // Cached consumption
         private List<AuditRecord> cachedAudit;                          // Cached audit
@@ -114,12 +116,24 @@ namespace CacheControler_Project.Classes
             Task.Run(() => CacheGarbageCollector());                        // Start background Grabage collector task
         }
 
+        ~CacheControler()
+        {
+
+        }
+
+        public bool DBOnline        { get { return dbOnline;        } }
+        public bool AuditAcceptable { get { return auditAcceptable; } }
+        public bool GeoAcceptable   { get { return geoAcceptable;   } }
+
+        public List<AuditRecord> CachedAudit { get => cachedAudit;}
+        public Dictionary<string, string> CachedGeo { get => cachedGeo; }
+
         public bool DBTryReconnect()
         {
             try
             {
-                dbOnline= m_ConnectionControler.TryReconnect();
-                if(!m_ConnectionControler.TryReconnect())return false;
+                dbOnline = m_ConnectionControler.TryReconnect();
+                if (!m_ConnectionControler.TryReconnect()) return false;
                 List<AuditRecord> candidateAudit = m_ConnectionControler.ReadAuditContnet();        //Try to retrive initial data
                 Dictionary<string, string> candidateGeo = m_ConnectionControler.ReadGeoContent();
 
@@ -149,18 +163,6 @@ namespace CacheControler_Project.Classes
             dbOnline = true;
             return dbOnline;
         }
-
-        ~CacheControler()
-        {
-
-        }
-
-        public bool DBOnline        { get { return dbOnline;        } }
-        public bool AuditAcceptable { get { return auditAcceptable; } }
-        public bool GeoAcceptable   { get { return geoAcceptable;   } }
-
-        public List<AuditRecord> CachedAudit { get => cachedAudit;}
-        public Dictionary<string, string> CachedGeo { get => cachedGeo; }
 
         /// 
         /// <param name="geoRecord"></param>
@@ -404,6 +406,7 @@ namespace CacheControler_Project.Classes
                     var retVal = m_ConnectionControler.GeoEntityUpdate(oldName, newName);
                     cachedGeo.Add(newName, cachedGeo[oldName]);
                     cachedGeo.Remove(oldName);
+                    return EUpdateGeoStatus.Success;
                 } 
                 catch (Exception)
                 { dbOnline = false; return EUpdateGeoStatus.DBWriteFailed; }

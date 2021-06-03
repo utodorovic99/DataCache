@@ -4,6 +4,7 @@ using Common_Project.DistributedServices;
 using ConnectionControler_Project.Classes;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,15 +12,15 @@ using UI_Project.ClientServices;
 
 namespace CacheControler_Project.Classes
 {
+    [ExcludeFromCodeCoverage]
     public class CacheControlerAgent : IConsumptionReq, IAuditReq, IGeographyReq, IFunctionalReq
     {
         private ConnectionControler connectionControler;
-
-        public bool TryReconnect() { return connectionControler.TryReconnect(); }
         public CacheControlerAgent()
         {
             connectionControler = ConnectionControler.Instance;
         }
+        public bool TryReconnect() { return connectionControler.TryReconnect(); }
 
         public List<ConsumptionRecord> ConsumptionReqPropagate(DSpanGeoReq dSpanGeoReq)
         {

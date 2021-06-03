@@ -80,6 +80,7 @@
     <Compile Include="ClassesTest\FileControlerTest.cs" />
     <Compile Include="HandlersTest\XMLHandlerTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TestXMLs\FileSystemEmulator.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
@@ -124,18 +125,26 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <CodeAnalysisDictionary Include="TestXMLs\ostv_2018_05_07.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </CodeAnalysisDictionary>
-    <CodeAnalysisDictionary Include="TestXMLs\ostv_2018_05_08.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </CodeAnalysisDictionary>
+    <EmbeddedResource Include="TestXMLs\ostv_2018_05_07.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TestXMLs\ostv_2018_05_08.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="TestXMLs\bad_convention_example.xml" />
-    <Content Include="TestXMLs\ostv_2018_05_09.xml" />
-    <Content Include="TestXMLs\ostv_2018_05_10.xml" />
-    <Content Include="TestXMLs\ostv_2018_05_11.xml" />
+    <EmbeddedResource Include="TestXMLs\bad_convention_example.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TestXMLs\ostv_2018_05_09.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TestXMLs\ostv_2018_05_10.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TestXMLs\ostv_2018_05_11.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

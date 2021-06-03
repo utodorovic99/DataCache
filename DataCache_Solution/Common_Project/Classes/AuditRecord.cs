@@ -42,38 +42,20 @@ namespace Common_Project.Classes
 
         public string GID
         {
-            get
-            {
-                return gID;
-            }
-            set
-            {
-                gID = value;
-            }
+            get { return gID;  }
+            set { gID = value; }
         }
 
         public string TimeStamp
         {
-            get
-            {
-                return timeStamp;
-            }
-            set
-            {
-                timeStamp = value;
-            }
+            get { return timeStamp;  }
+            set { timeStamp = value; }
         }
 
         public int DupVal
         {
-            get
-            {
-                return dupVal;
-            }
-            set
-            {
-                dupVal = value;
-            }
+            get { return dupVal;  }
+            set { dupVal = value; }
         }
 
         public override string ToString()

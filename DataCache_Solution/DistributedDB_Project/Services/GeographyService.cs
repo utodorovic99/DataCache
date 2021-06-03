@@ -29,7 +29,7 @@ public class GeographyService {
 
 		var loadedGeos = m_IGeographyDAO.FindAll();
 
-		// Client side has less resources use fast server to
+		// Client side has less resources use faster server to
 		// covert it into dictionary to make things faster
 		// on client side
 		Dictionary<string, string> retVal = new Dictionary<string, string>();

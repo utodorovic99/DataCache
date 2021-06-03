@@ -27,12 +27,6 @@ public interface IConsumptionDAO:ICRUDDao<ConsumptionRecord, string>  {
 
 	List<ConsumptionRecord> FindByGeographyAndBeforeDate(string targetGID, string targetTimestamp);
 
-
-	ConsumptionUpdate StoreConsumption(List<ConsumptionRecord> consumptionRecords);
-
-
-	ConsumptionUpdate StoreConsumption(ConsumptionRecord consumptionRecords);
-
 	bool ExistsByContent(ConsumptionRecord record); //
 
 

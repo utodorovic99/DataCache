@@ -54,12 +54,14 @@ public class ConsumptionService {
 	/// <param name="consumptionRecords"></param>
 	public ConsumptionUpdate HandleStoreConsumption(List<ConsumptionRecord> consumptionRecords)
 	{
-		return m_IConsumptionDAO.StoreConsumption(consumptionRecords);
+		m_IConsumptionDAO.SaveAll(consumptionRecords);
+		return ConsumptionDAOImpl.SharedUpdate;
 	}
 
 	public ConsumptionUpdate HandleStoreConsumption(ConsumptionRecord consumptionRecords)
 	{
-		return m_IConsumptionDAO.StoreConsumption(consumptionRecords);
+		m_IConsumptionDAO.Save(consumptionRecords);
+		return ConsumptionDAOImpl.SharedUpdate;
 	}
 
 	public List<ConsumptionRecord> HandleFindConsumptionAll()

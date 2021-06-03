@@ -22,8 +22,8 @@ namespace CacheControler_Project.Classes
 
         public CacheHit(List<ConsumptionRecord> cRecord)
         {
-            this.cRecord = cRecord;
             hitTime = DateTime.Now;
+            this.cRecord = cRecord;
         }
 
         ~CacheHit()
@@ -40,7 +40,6 @@ namespace CacheControler_Project.Classes
         public DateTime HitTime
         {
             get { return hitTime;  }
-            set { hitTime = value; }
         }
 
     }//end CacheHit

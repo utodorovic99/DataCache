@@ -92,8 +92,7 @@ namespace UI_Project.Classes
         /// <param name="name"></param>
         public EUpdateGeoStatus UpdateGeoEntity(string oldName, string newName)
         {
-            m_CacheControler.UpdateGeoEntity(oldName, newName);
-            return EUpdateGeoStatus.Success;
+            return m_CacheControler.UpdateGeoEntity(oldName, newName);
         }
 
        

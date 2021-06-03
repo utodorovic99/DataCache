@@ -20,6 +20,7 @@ using Common_Project.Classes;
 using ConnectionControler_Project.Exceptions;
 using System.ServiceModel;
 using NUnit.Framework;
+using ConnectionControler_ProjectTest.Fakes;
 
 namespace FileControler_ProjectTest.ClassesTest
 {
@@ -46,9 +47,10 @@ namespace FileControler_ProjectTest.ClassesTest
             //Arrange
             List<ConsumptionRecord> inputParam = new List<ConsumptionRecord>();
             ConsumptionUpdate retVal;
+            ConnectionControler_Fake controler = ConnectionControler_Fake.Instance;
 
             //Act
-            retVal=ConnectionControlerTest.FakeOstvConsumptionDBWrite(inputParam);
+            retVal =controler.OstvConsumptionDBWrite(inputParam);
 
             //Assert
             Assert.IsNotNull(retVal);
@@ -63,9 +65,10 @@ namespace FileControler_ProjectTest.ClassesTest
             //Arrange
             List<ConsumptionRecord> inputParam = null;
             ConsumptionUpdate retVal;
+            ConnectionControler_Fake controler = ConnectionControler_Fake.Instance;
 
             //Act
-            retVal = ConnectionControlerTest.FakeOstvConsumptionDBWrite(inputParam);
+            retVal = controler.OstvConsumptionDBWrite(inputParam);
 
             //Assert
             Assert.IsNotNull(retVal);
@@ -82,18 +85,19 @@ namespace FileControler_ProjectTest.ClassesTest
             List<ConsumptionRecord> inputParam = new List<ConsumptionRecord>();
             inputParam.Add(new ConsumptionRecord());
             ConsumptionUpdate retVal;
-            ConnectionControlerTest.proxy.Setup(x => x.OstvConsumptionDBWrite(inputParam)).
+            ConnectionControler_Fake controler = ConnectionControler_Fake.Instance;
+            ConnectionControler_Fake.proxy.Setup(x => x.OstvConsumptionDBWrite(inputParam)).
                 Throws(new CommunicationObjectFaultedException());
 
             //Act
             try
             {
-                retVal = ConnectionControlerTest.FakeOstvConsumptionDBWrite(inputParam);
+                retVal = controler.OstvConsumptionDBWrite(inputParam);
                 Assert.Fail();
             }
             catch (DBOfflineException ex) 
             {
-                Assert.IsFalse(ConnectionControlerTest.ActivityState());
+                Assert.IsFalse(ConnectionControler_Fake.ActivityState());
                 Assert.AreEqual("Remote Database is currently offline, check network connection and call support.", ex.Message);
             }
         }

@@ -91,7 +91,6 @@ namespace Common_Project.Classes
             else return -1;
         }
 
-        # region CheckTimeRelationMine
         public bool CheckTimeRelationMine(string timePoint, string relation, bool ignoreHours)
         {
             List<string> olderParts;
@@ -164,5 +163,4 @@ namespace Common_Project.Classes
         }
 
     }//end ConsumptionRecord
-    #endregion
 }

@@ -84,6 +84,7 @@
   <ItemGroup>
     <Compile Include="ClassesTest\ConnectionControlerTest.cs" />
     <Compile Include="ExceptionsTest\DBOfflineExceptionTest.cs" />
+    <Compile Include="Fakes\ConnectionControler_Fake.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

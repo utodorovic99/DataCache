@@ -2,25 +2,23 @@
 using FileControler_Project.Classes;
 using FileControler_Project.Enums;
 using FileControler_Project.Handlers.XMLHandler.Classes;
+using FileControler_ProjectTest.TestXMLs;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace FileControler_ProjectTest.ClassesTest
 {
     [TestFixture]
     public class FileControlerTest
     {
-
-        //Arrange
-
-        //Act
-
-        //Assert
 
         [Test]
         public void FileControler_TestConstructor_PassesAndDBOffline()
@@ -38,7 +36,7 @@ namespace FileControler_ProjectTest.ClassesTest
         {
             //Arrange
             FileControler fileControler = new FileControler();
-            bool retVal=
+            bool retVal;
 
             //Act
             retVal =fileControler.DBTryReconnect();
@@ -54,11 +52,13 @@ namespace FileControler_ProjectTest.ClassesTest
             //Arrange
             FileControler fileControler = new FileControler();
             Tuple<string, Tuple<EFileLoadStatus, ConsumptionUpdate>> retVal;
-            string path = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.FullName;
-            FileInfo fileInfo = new FileInfo(path + "\\TestXMLs\\ostv_2018_05_07.xml");
+            string fullTmpFilePath= FileSystemEmulator.GetResourceTextFile("ostv_2018_05_07.xml");
 
             //Act
-            retVal = fileControler.LoadFileStoreDB(fileInfo.FullName, ELoadDataType.Consumption);
+            retVal = fileControler.LoadFileStoreDB(fullTmpFilePath, ELoadDataType.Consumption);
+
+            //Dispose
+            File.Delete(fullTmpFilePath);
 
             //Assert
             Assert.AreEqual(EFileLoadStatus.DBWriteFailed, retVal.Item2.Item1);
@@ -75,6 +75,7 @@ namespace FileControler_ProjectTest.ClassesTest
             Tuple<string, Tuple<EFileLoadStatus, ConsumptionUpdate>> retVal;
             string path = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.FullName;
             FileInfo fileInfo = new FileInfo(path + "\\TestXMLs\\ostv_2018_05_07.css");
+
 
             //Act
             retVal = fileControler.LoadFileStoreDB(fileInfo.FullName, ELoadDataType.Consumption);
@@ -126,7 +127,7 @@ namespace FileControler_ProjectTest.ClassesTest
         }
 
         [Test]
-        public void InitDBConsumptionWrite_TryExecuteOstvConsumptionRWOnBadDateContext_ReturnsInvalidDateTimen()
+        public void InitDBConsumptionWrite_TryExecuteOstvConsumptionRWOnBadDateContext_ReturnsInvalidDateTime()
         {
             //Arrange
             FileControler fileControler = new FileControler();

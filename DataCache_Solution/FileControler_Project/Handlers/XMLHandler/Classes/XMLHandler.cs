@@ -17,185 +17,185 @@ using FileControler_Project.Enums;
 
 namespace FileControler_Project.Handlers.XMLHandler.Classes
 {
-    public class XMLHandler
-{
-
-	public XMLHandler()
+	public class XMLHandler
 	{
 
-	}
+		public XMLHandler()
+		{
 
-	~XMLHandler()
-	{
+		}
 
-	}
+		~XMLHandler()
+		{
 
-	private EXMLElementStatus IsOstvConsumptionXMLEmentValid(XmlNode element)   // For Stavka checking child elements 
-	{
-		int satFound = 0, loadFound = 0, oblastFound = 0, unknownFound = 0;
-		if(element != null)
-        {
-			foreach (XmlNode childNode in element.ChildNodes)
+		}
+
+		private EXMLElementStatus IsOstvConsumptionXMLEmentValid(XmlNode element)   // For Stavka checking child elements 
+		{
+			int satFound = 0, loadFound = 0, oblastFound = 0, unknownFound = 0;
+			if(element != null)
 			{
-				if (childNode.NodeType == XmlNodeType.Element)
+				foreach (XmlNode childNode in element.ChildNodes)
 				{
-					switch ((childNode as XmlNode).Name)
+					if (childNode.NodeType == XmlNodeType.Element)
 					{
-						//Place to add new elements in single STAVKA
-						case "SAT": 
+						switch ((childNode as XmlNode).Name)
 						{
-							if (childNode.InnerText != "" )
-								++satFound; break; 
-						}
+							//Place to add new elements in single STAVKA
+							case "SAT": 
+							{
+								if (childNode.InnerText != "" )
+									++satFound; break; 
+							}
 
-						case "LOAD": 
-						{
-							if (childNode.InnerText != "")
-								++loadFound; 
-							break; 
+							case "LOAD": 
+							{
+								if (childNode.InnerText != "")
+									++loadFound; 
+								break; 
+							}
+							case "OBLAST": 
+							{ 
+								if(childNode.InnerText!="")
+									++oblastFound; 
+								break; 
+							}
+							default: { ++unknownFound; break; }
 						}
-						case "OBLAST": 
-						{ 
-							if(childNode.InnerText!="")
-								++oblastFound; 
-							break; 
-						}
-						default: { ++unknownFound; break; }
 					}
 				}
 			}
-		}
 
-		//Look EXMLElementStatus for status description
-		if ((satFound == 0 && loadFound == 0 && oblastFound == 0) || (satFound > 1 || loadFound > 1 || oblastFound > 1))
-																						return EXMLElementStatus.Fail;
-		if (satFound == 1 && loadFound == 0 && oblastFound == 1 && unknownFound == 0)	return EXMLElementStatus.PartialValid;
-		if (satFound == 1 && loadFound == 1 && oblastFound == 1)
-		{
-			if (unknownFound == 0) return EXMLElementStatus.Valid;
-			else return EXMLElementStatus.Overflow;
-		}
-		return EXMLElementStatus.PartialDump;
-	}
-
-	private ConsumptionRecord ParseXMLConsumptionRecord(XmlNode xmlNode, string dateTimeBase)
-	{
-		ConsumptionRecord retCRecord = new ConsumptionRecord();
-		//if (xmlNode == null || dateTimeBase==null) return retCRecord;
-
-		string elemContent = "";
-		int tmpParse=0;
-		foreach (XmlNode childNode in xmlNode.ChildNodes)
-		{
-			if (xmlNode.NodeType == XmlNodeType.Element)
+			//Look EXMLElementStatus for status description
+			if ((satFound == 0 && loadFound == 0 && oblastFound == 0) || (satFound > 1 || loadFound > 1 || oblastFound > 1))
+																							return EXMLElementStatus.Fail;
+			if (satFound == 1 && loadFound == 0 && oblastFound == 1 && unknownFound == 0)	return EXMLElementStatus.PartialValid;
+			if (satFound == 1 && loadFound == 1 && oblastFound == 1)
 			{
-				elemContent = childNode.InnerText;
-				switch ((childNode as XmlNode).Name)
-				{
-					//Place to add new elements to handle in single STAVKA
-					case "SAT":
-						{
-							if (Int32.TryParse(elemContent, out tmpParse) && tmpParse > 0 && tmpParse <= 24)
-							{
-								retCRecord.TimeStamp = dateTimeBase + elemContent;
-							}
-							break;
-						}
-					case "LOAD":
-						{
-							if (Int32.TryParse(elemContent, out tmpParse) && tmpParse > 0)
-							{
-								retCRecord.MWh = Int32.Parse(elemContent);
-							}
-							break;
-						}
-					case "OBLAST": { retCRecord.GID = elemContent; break; }
-					//default: {/*Place to handle not supported node types*/ break; }
-				}
+				if (unknownFound == 0) return EXMLElementStatus.Valid;
+				else return EXMLElementStatus.Overflow;
 			}
-
+			return EXMLElementStatus.PartialDump;
 		}
 
-		return retCRecord;
-	}
-
-	/// 
-	/// <param name="path"></param>
-	public Tuple<EFileLoadStatus, List<ConsumptionRecord>> XMLOstvConsumptionRead(FileInfo fileInfo)
-	{
-
-		List<ConsumptionRecord> readedElems = new List<ConsumptionRecord>();
-		ConsumptionRecord tmpRecord = null ;
-
-		XmlDocument xmlDocument = new XmlDocument();
-		try { xmlDocument.Load(fileInfo.FullName); }
-		catch (System.IO.FileNotFoundException)
-		{ return new Tuple<EFileLoadStatus, List<ConsumptionRecord>>(EFileLoadStatus.OpeningFailed, readedElems); }
-
-		string dateTimeBase = "";
+		private ConsumptionRecord ParseXMLConsumptionRecord(XmlNode xmlNode, string dateTimeBase)
 		{
-			char[] splitWordsBy = "_.".ToArray();
-			string[] splitParts = fileInfo.Name.Split(splitWordsBy, StringSplitOptions.RemoveEmptyEntries);
-			if(splitParts.Length<5) return new Tuple<EFileLoadStatus, List<ConsumptionRecord>>(EFileLoadStatus.FileNameConventionViolated, readedElems);
+			ConsumptionRecord retCRecord = new ConsumptionRecord();
+			//if (xmlNode == null || dateTimeBase==null) return retCRecord;
 
-				dateTimeBase = splitParts[1] + "-" + splitParts[2] + "-" + splitParts[3] + "-";
-		}
-
-		int elemsAcceptable = 0;
-		bool corruptedElems = false;
-		foreach (XmlNode xmlNode in xmlDocument.DocumentElement)
-		{
-			if (xmlNode.NodeType == XmlNodeType.Element && xmlNode.Name == "STAVKA")
+			string elemContent = "";
+			int tmpParse=0;
+			foreach (XmlNode childNode in xmlNode.ChildNodes)
 			{
-				switch (IsOstvConsumptionXMLEmentValid(xmlNode))
+				if (xmlNode.NodeType == XmlNodeType.Element)
 				{
-					case EXMLElementStatus.Fail:	//Visited
-						{
-							corruptedElems = true;
-							break;
-						}
-					case EXMLElementStatus.Overflow:    // Consired as acceptable
-						{
-							++elemsAcceptable;
-							tmpRecord = ParseXMLConsumptionRecord(xmlNode, dateTimeBase);
-							if(tmpRecord.HasUsableStatus()) readedElems.Add(tmpRecord);
+					elemContent = childNode.InnerText;
+					switch ((childNode as XmlNode).Name)
+					{
+						//Place to add new elements to handle in single STAVKA
+						case "SAT":
+							{
+								if (Int32.TryParse(elemContent, out tmpParse) && tmpParse > 0 && tmpParse <= 24)
+								{
+									retCRecord.TimeStamp = dateTimeBase + elemContent;
+								}
 								break;
-						}
-					case EXMLElementStatus.PartialValid:	
-						{
-							++elemsAcceptable;
-							tmpRecord = ParseXMLConsumptionRecord(xmlNode, dateTimeBase);
-							if (tmpRecord.HasUsableStatus()) readedElems.Add(tmpRecord);
-							break;
-						}
-					case EXMLElementStatus.PartialDump:	
-						{
-							corruptedElems = true;
-							break;
-						}
-					case EXMLElementStatus.Valid:	
-						{
-							++elemsAcceptable;
-							tmpRecord = ParseXMLConsumptionRecord(xmlNode, dateTimeBase);
-							if (tmpRecord.HasUsableStatus()) readedElems.Add(tmpRecord);
-							break;
-						}
+							}
+						case "LOAD":
+							{
+								if (Int32.TryParse(elemContent, out tmpParse) && tmpParse > 0)
+								{
+									retCRecord.MWh = Int32.Parse(elemContent);
+								}
+								break;
+							}
+						case "OBLAST": { retCRecord.GID = elemContent; break; }
+						//default: {/*Place to handle not supported node types*/ break; }
+					}
 				}
+
 			}
 
+			return retCRecord;
 		}
 
-		if (corruptedElems && elemsAcceptable > 0) return new Tuple<EFileLoadStatus, List<ConsumptionRecord>>
-																		(EFileLoadStatus.PartialReadSuccess, readedElems);
+		/// 
+		/// <param name="path"></param>
+		public Tuple<EFileLoadStatus, List<ConsumptionRecord>> XMLOstvConsumptionRead(FileInfo fileInfo)
+		{
 
-		if (corruptedElems && elemsAcceptable == 0) return new Tuple<EFileLoadStatus, List<ConsumptionRecord>>
-																(EFileLoadStatus.InvalidFileStructure, readedElems);
+			List<ConsumptionRecord> readedElems = new List<ConsumptionRecord>();
+			ConsumptionRecord tmpRecord = null ;
+
+			XmlDocument xmlDocument = new XmlDocument();
+			try { xmlDocument.Load(fileInfo.FullName); }
+			catch (System.IO.FileNotFoundException)
+			{ return new Tuple<EFileLoadStatus, List<ConsumptionRecord>>(EFileLoadStatus.OpeningFailed, readedElems); }
+
+			string dateTimeBase = "";
+			{
+				char[] splitWordsBy = "_.".ToArray();
+				string[] splitParts = fileInfo.Name.Split(splitWordsBy, StringSplitOptions.RemoveEmptyEntries);
+				if(splitParts.Length<5) return new Tuple<EFileLoadStatus, List<ConsumptionRecord>>(EFileLoadStatus.FileNameConventionViolated, readedElems);
+
+					dateTimeBase = splitParts[1] + "-" + splitParts[2] + "-" + splitParts[3] + "-";
+			}
+
+			int elemsAcceptable = 0;
+			bool corruptedElems = false;
+			foreach (XmlNode xmlNode in xmlDocument.DocumentElement)
+			{
+				if (xmlNode.NodeType == XmlNodeType.Element && xmlNode.Name == "STAVKA")
+				{
+					switch (IsOstvConsumptionXMLEmentValid(xmlNode))
+					{
+						case EXMLElementStatus.Fail:	//Visited
+							{
+								corruptedElems = true;
+								break;
+							}
+						case EXMLElementStatus.Overflow:    // Consired as acceptable
+							{
+								++elemsAcceptable;
+								tmpRecord = ParseXMLConsumptionRecord(xmlNode, dateTimeBase);
+								if(tmpRecord.HasUsableStatus()) readedElems.Add(tmpRecord);
+									break;
+							}
+						case EXMLElementStatus.PartialValid:	
+							{
+								++elemsAcceptable;
+								tmpRecord = ParseXMLConsumptionRecord(xmlNode, dateTimeBase);
+								if (tmpRecord.HasUsableStatus()) readedElems.Add(tmpRecord);
+								break;
+							}
+						case EXMLElementStatus.PartialDump:	
+							{
+								corruptedElems = true;
+								break;
+							}
+						case EXMLElementStatus.Valid:	
+							{
+								++elemsAcceptable;
+								tmpRecord = ParseXMLConsumptionRecord(xmlNode, dateTimeBase);
+								if (tmpRecord.HasUsableStatus()) readedElems.Add(tmpRecord);
+								break;
+							}
+					}
+				}
+
+			}
+
+			if (corruptedElems && elemsAcceptable > 0) return new Tuple<EFileLoadStatus, List<ConsumptionRecord>>
+																			(EFileLoadStatus.PartialReadSuccess, readedElems);
+
+			if (corruptedElems && elemsAcceptable == 0) return new Tuple<EFileLoadStatus, List<ConsumptionRecord>>
+																	(EFileLoadStatus.InvalidFileStructure, readedElems);
 
 
-		return new Tuple<EFileLoadStatus, List<ConsumptionRecord>>                              // Risky
-												(EFileLoadStatus.Success, readedElems);
-	}
+			return new Tuple<EFileLoadStatus, List<ConsumptionRecord>>                              // Risky
+													(EFileLoadStatus.Success, readedElems);
+		}
 
-}//end XMLHandler
+	}//end XMLHandler
 
 }

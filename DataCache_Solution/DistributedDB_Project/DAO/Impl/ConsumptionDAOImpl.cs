@@ -19,7 +19,9 @@ using DistributedDB_Project.Exceptions;
 public class ConsumptionDAOImpl : IConsumptionDAO
 {
 
-    private ConsumptionUpdate sharedUpdate; // Works only when paralelisation is excluded
+    private static ConsumptionUpdate sharedUpdate; // Works only when paralelisation is excluded
+
+    public static ConsumptionUpdate SharedUpdate { get => sharedUpdate;}
 
     public ConsumptionDAOImpl(){
 
@@ -1034,18 +1036,6 @@ public class ConsumptionDAOImpl : IConsumptionDAO
             }
         }
     
-    }
-
-    public ConsumptionUpdate StoreConsumption(List<ConsumptionRecord> consumptionRecords)
-    {
-        SaveAll(consumptionRecords);
-        return sharedUpdate;
-    }
-
-    public ConsumptionUpdate StoreConsumption(ConsumptionRecord consumptionRecords)
-    {
-        Save(consumptionRecords);
-        return sharedUpdate;
     }
 
     private List<string> GetAllGeoPKs()
