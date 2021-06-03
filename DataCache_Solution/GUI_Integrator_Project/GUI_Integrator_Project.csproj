@@ -103,6 +103,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\CacheControler_Project\CacheControler_Project.csproj">
+      <Project>{112958EF-61DB-44C8-AC8E-12FE8FB39BA3}</Project>
+      <Name>CacheControler_Project</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Common_Project\Common_Project.csproj">
       <Project>{E2217C16-FAF1-40E4-8543-E0D484694C09}</Project>
       <Name>Common_Project</Name>

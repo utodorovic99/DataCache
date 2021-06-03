@@ -48,9 +48,6 @@ namespace CacheControler_Project.Classes
         private bool auditAcceptable;
         private bool geoAcceptable;
 
-        private Task garbageCollectorTask;
-
-
         public CacheControler()
         {
             cacheValidPeriod = 3;               
@@ -115,12 +112,11 @@ namespace CacheControler_Project.Classes
 
             }
 
-            garbageCollectorTask = Task.Run(() => CacheGarbageCollector());                        // Start background Grabage collector task
+            Task.Run(() => CacheGarbageCollector());                        // Start background Grabage collector task
         }
 
         ~CacheControler()
         {
-            garbageCollectorTask.Dispose();
         }
 
         public bool DBOnline        { get { return dbOnline;        } }
