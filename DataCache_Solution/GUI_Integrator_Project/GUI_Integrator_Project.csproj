@@ -56,6 +56,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Page Include="AuditWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -63,6 +67,9 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="AuditWindow.xaml.cs">
+      <DependentUpon>AuditWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
@@ -94,6 +101,20 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Common_Project\Common_Project.csproj">
+      <Project>{E2217C16-FAF1-40E4-8543-E0D484694C09}</Project>
+      <Name>Common_Project</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\FileControler_Project\FileControler_Project.csproj">
+      <Project>{8963EA46-7D58-4D9A-9B6E-1D65A844A1C3}</Project>
+      <Name>FileControler_Project</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\UI_Project\UI_Project.csproj">
+      <Project>{91B02427-273E-4B20-8983-2718EEEBDE35}</Project>
+      <Name>UI_Project</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
