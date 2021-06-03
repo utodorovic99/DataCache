@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<PROGNOZIRANI_LOAD>
+	<STAVKA>
+		<SAT>1</SAT>
+		<LOAD>3190</LOAD>
+		<OBLAST>SRB</OBLAST>
+	</STAVKA>
+
+	<STAVKA>
+		<SAT>1</SAT>
+		<SAT>2</SAT>
+		<LOAD>3190</LOAD>
+		<OBLAST></OBLAST>
+	</STAVKA>
+
+	<STAVKA>
+	</STAVKA>
+
+</PROGNOZIRANI_LOAD>
