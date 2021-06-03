@@ -1,4 +1,5 @@
 ﻿using CacheControler_Project.Enums;
+using CacheControler_Project.Services;
 using Common_Project.Classes;
 using Common_Project.DistributedServices;
 using ConnectionControler_Project.Classes;
@@ -13,7 +14,7 @@ using UI_Project.ClientServices;
 namespace CacheControler_Project.Classes
 {
     [ExcludeFromCodeCoverage]
-    public class CacheControlerAgent : IConsumptionReq, IAuditReq, IGeographyReq, IFunctionalReq
+    public class CacheControlerAgent : ICacheReq
     {
         private ConnectionControler connectionControler;
         public CacheControlerAgent()

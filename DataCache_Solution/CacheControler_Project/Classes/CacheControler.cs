@@ -23,7 +23,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace CacheControler_Project.Classes
 {
     [ExcludeFromCodeCoverage]
-    public class CacheControler : IConsumptionRead
+    public class CacheControler : ICacheOps
     {
         private CacheControlerAgent m_ConnectionControler;
 
@@ -47,6 +47,8 @@ namespace CacheControler_Project.Classes
         private bool dbOnline;
         private bool auditAcceptable;
         private bool geoAcceptable;
+
+        private Task garbageCollectorTask;
 
 
         public CacheControler()
@@ -113,12 +115,12 @@ namespace CacheControler_Project.Classes
 
             }
 
-            Task.Run(() => CacheGarbageCollector());                        // Start background Grabage collector task
+            garbageCollectorTask = Task.Run(() => CacheGarbageCollector());                        // Start background Grabage collector task
         }
 
         ~CacheControler()
         {
-
+            garbageCollectorTask.Dispose();
         }
 
         public bool DBOnline        { get { return dbOnline;        } }
@@ -211,7 +213,7 @@ namespace CacheControler_Project.Classes
                         }
                     }
                 }
-                Task.Delay(garbageCollectorInterval);
+                Thread.Sleep(garbageCollectorInterval);
             }
             
         }
@@ -225,7 +227,7 @@ namespace CacheControler_Project.Classes
             int targetLoc = elemLoc-1;
             while (targetLoc >= 0 && orderedCacheOverlayHits[targetLoc] > hitVal) --targetLoc;   // Skip to find place
 
-            if(targetLoc>0) 
+            if (targetLoc > 0 && targetLoc < orderedCacheOverlayKeys.Count-2) //Keep index inside range
             {
                 orderedCacheOverlayKeys.Insert(targetLoc, dSPanGeoReq);   // Replace
                 orderedCacheOverlayKeys.RemoveAt(elemLoc + 1);            // Delete old
