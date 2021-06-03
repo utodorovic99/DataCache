@@ -1,0 +1,6 @@
+C:\Users\Ugljesa\Desktop\REES Cache - Private\DataCache_Solution\Common_Project\bin\Debug\Common_Project.dll
+C:\Users\Ugljesa\Desktop\REES Cache - Private\DataCache_Solution\Common_Project\bin\Debug\Common_Project.pdb
+C:\Users\Ugljesa\Desktop\REES Cache - Private\DataCache_Solution\Common_Project\obj\Debug\Common_Project.csproj.CoreCompileInputs.cache
+C:\Users\Ugljesa\Desktop\REES Cache - Private\DataCache_Solution\Common_Project\obj\Debug\Common_Project.dll
+C:\Users\Ugljesa\Desktop\REES Cache - Private\DataCache_Solution\Common_Project\obj\Debug\Common_Project.pdb
+C:\Users\Ugljesa\Desktop\REES Cache - Private\DataCache_Solution\Common_Project\obj\Debug\Common_Project.csprojAssemblyReference.cache
