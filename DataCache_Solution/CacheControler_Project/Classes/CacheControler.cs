@@ -48,6 +48,8 @@ namespace CacheControler_Project.Classes
         private bool auditAcceptable;
         private bool geoAcceptable;
 
+        private static bool keepGCThreadAlive = true;
+
         public CacheControler()
         {
             cacheValidPeriod = 3;               
@@ -85,7 +87,6 @@ namespace CacheControler_Project.Classes
                 try
                 { 
                     candidateAudit = m_ConnectionControler.ReadAuditContnet();  //Try to retrive initial data
-                    candidateGeo = m_ConnectionControler.ReadGeoContent();
                     if (candidateAudit.Count > maxAudit)
                         auditAcceptable = false;
                     else
@@ -95,6 +96,7 @@ namespace CacheControler_Project.Classes
                         freeAuditRecords = maxAudit - cachedAudit.Count;
                     }
 
+                    candidateGeo = m_ConnectionControler.ReadGeoContent();
                     if (candidateGeo.Count > maxGeo)
                         geoAcceptable = false;
                     else
@@ -117,6 +119,7 @@ namespace CacheControler_Project.Classes
 
         ~CacheControler()
         {
+            keepGCThreadAlive = false;
         }
 
         public bool DBOnline        { get { return dbOnline;        } }
@@ -133,8 +136,6 @@ namespace CacheControler_Project.Classes
                 dbOnline = m_ConnectionControler.TryReconnect();
                 if (!m_ConnectionControler.TryReconnect()) return false;
                 List<AuditRecord> candidateAudit = m_ConnectionControler.ReadAuditContnet();        //Try to retrive initial data
-                Dictionary<string, string> candidateGeo = m_ConnectionControler.ReadGeoContent();
-
                 if (candidateAudit.Count > maxAudit)
                     auditAcceptable = false;
                 else
@@ -144,6 +145,7 @@ namespace CacheControler_Project.Classes
                     freeAuditRecords = maxAudit - cachedAudit.Count;
                 }
 
+                Dictionary<string, string> candidateGeo = m_ConnectionControler.ReadGeoContent();
                 if (candidateGeo.Count > maxGeo)
                     geoAcceptable = false;
                 else
@@ -192,9 +194,9 @@ namespace CacheControler_Project.Classes
         private void  CacheGarbageCollector()    // Task body awakens each minute and delete records 
         {
             int targetIndex;
-            while (true)
+            while (keepGCThreadAlive)
             {
-                if (DateTime.Compare(futureCheckpoint, DateTime.Now.AddMinutes(1)) < 0) futureCheckpoint = DateTime.Now; //2:59 hours passed
+                 
                 lock (cacheLock)   
                 {
                     foreach (var elem in cachedConsumption)
@@ -209,6 +211,7 @@ namespace CacheControler_Project.Classes
                         }
                     }
                 }
+                if (DateTime.Compare(DateTime.Now, futureCheckpoint) > 0) futureCheckpoint = DateTime.Now;
                 Thread.Sleep(garbageCollectorInterval);
             }
             
