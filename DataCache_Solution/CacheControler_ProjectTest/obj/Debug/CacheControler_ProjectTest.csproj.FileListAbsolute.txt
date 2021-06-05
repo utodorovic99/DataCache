@@ -13,3 +13,13 @@ C:\Users\Ugljesa\Desktop\REES Cache - Private\DataCache_Solution\CacheControler_
 C:\Users\Ugljesa\Desktop\REES Cache - Private\DataCache_Solution\CacheControler_ProjectTest\obj\Debug\CacheControler_ProjectTest.csproj.CopyComplete
 C:\Users\Ugljesa\Desktop\REES Cache - Private\DataCache_Solution\CacheControler_ProjectTest\obj\Debug\CacheControler_ProjectTest.dll
 C:\Users\Ugljesa\Desktop\REES Cache - Private\DataCache_Solution\CacheControler_ProjectTest\obj\Debug\CacheControler_ProjectTest.pdb
+C:\Users\Ugljesa\Desktop\REES Cache - Private\DataCache_Solution\CacheControler_ProjectTest\bin\Debug\Castle.Core.dll
+C:\Users\Ugljesa\Desktop\REES Cache - Private\DataCache_Solution\CacheControler_ProjectTest\bin\Debug\ConnectionControler_ProjectTest.dll
+C:\Users\Ugljesa\Desktop\REES Cache - Private\DataCache_Solution\CacheControler_ProjectTest\bin\Debug\Moq.dll
+C:\Users\Ugljesa\Desktop\REES Cache - Private\DataCache_Solution\CacheControler_ProjectTest\bin\Debug\System.Runtime.CompilerServices.Unsafe.dll
+C:\Users\Ugljesa\Desktop\REES Cache - Private\DataCache_Solution\CacheControler_ProjectTest\bin\Debug\System.Threading.Tasks.Extensions.dll
+C:\Users\Ugljesa\Desktop\REES Cache - Private\DataCache_Solution\CacheControler_ProjectTest\bin\Debug\ConnectionControler_ProjectTest.pdb
+C:\Users\Ugljesa\Desktop\REES Cache - Private\DataCache_Solution\CacheControler_ProjectTest\bin\Debug\Castle.Core.xml
+C:\Users\Ugljesa\Desktop\REES Cache - Private\DataCache_Solution\CacheControler_ProjectTest\bin\Debug\Moq.xml
+C:\Users\Ugljesa\Desktop\REES Cache - Private\DataCache_Solution\CacheControler_ProjectTest\bin\Debug\System.Runtime.CompilerServices.Unsafe.xml
+C:\Users\Ugljesa\Desktop\REES Cache - Private\DataCache_Solution\CacheControler_ProjectTest\bin\Debug\System.Threading.Tasks.Extensions.xml
